@@ -69,9 +69,9 @@ namespace DamageTrackingFramework
                     [BoneId.LeftClavicle] = (Limb.Chest, BodyRegion.Torso),
                 };
 
-        internal static readonly Dictionary<WeaponHash, (string Name, DamageGroup DamageType, DamageType WeaponGroup)>
+        internal static readonly Dictionary<WeaponHash, (string Name, DamageGroup DamageGroup, DamageType DamageType)>
             WeaponLookup =
-                new Dictionary<WeaponHash, (string Name, DamageGroup DamageType, DamageType WeaponGroup)>
+                new Dictionary<WeaponHash, (string Name, DamageGroup DamageGroup, DamageType DamageType)>
                 {
                     [WeaponHash.Antique_Cavalry_Dagger] =
                         ("Antique Cavalry Dagger", DamageGroup.Melee, DamageType.MeleeStab),
