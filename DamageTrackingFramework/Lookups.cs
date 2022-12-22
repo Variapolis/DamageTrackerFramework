@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
-using Rage;
+using DamageTrackingFramework.DamageInfo;
+using WeaponHash = DamageTrackingFramework.DamageInfo.WeaponHash;
 
 namespace DamageTrackingFramework
 {

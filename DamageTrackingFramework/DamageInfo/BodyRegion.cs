@@ -1,4 +1,4 @@
-namespace DamageTrackingFramework
+namespace DamageTrackingFramework.DamageInfo
 {
     public enum BodyRegion
     {

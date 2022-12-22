@@ -4,6 +4,7 @@ using System.Linq;
 using DamageTrackingFramework.DamageInfo;
 using Rage;
 using Rage.Native;
+using WeaponHash = DamageTrackingFramework.DamageInfo.WeaponHash;
 
 namespace DamageTrackingFramework
 {
