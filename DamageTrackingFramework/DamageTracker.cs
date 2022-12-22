@@ -8,8 +8,13 @@ using WeaponHash = DamageTrackingFramework.DamageInfo.WeaponHash;
 
 namespace DamageTrackingFramework
 {
-    internal static class DamageTracker
+    public static class DamageTracker
     {
+        public delegate void PedDamagedDelegate(Ped ped, PedDamageInfo pedDamageInfo);
+
+        public static event PedDamagedDelegate OnPedTookDamage;
+        public static event PedDamagedDelegate OnPlayerTookDamage;
+
         // ReSharper disable once HeapView.ObjectAllocation.Evident
         private static readonly Dictionary<Ped, int> PedDict = new Dictionary<Ped, int>();
 
@@ -32,8 +37,21 @@ namespace DamageTrackingFramework
 
             var previousHealth = PedDict[ped];
             if (!TryGetPedDamage(ped, out var damage)) return;
-            GenerateDamageInfo(ped, previousHealth, damage);
+            InvokeDamageEvent(ped, GenerateDamageInfo(ped, previousHealth, damage));
             ClearPedDamage(ped);
+        }
+
+        private static void InvokeDamageEvent(Ped ped, PedDamageInfo damageInfo)
+        {
+            switch (ped.IsPlayer)
+            {
+                case true when OnPlayerTookDamage != null:
+                    OnPlayerTookDamage(ped, damageInfo);
+                    break;
+                case false when OnPedTookDamage != null:
+                    OnPedTookDamage(ped, damageInfo);
+                    break;
+            }
         }
 
         private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, WeaponDamageInfo damage)
