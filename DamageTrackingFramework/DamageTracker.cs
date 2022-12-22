@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DamageTrackingFramework.DamageInfo;
 using Rage;
 using Rage.Native;
 
@@ -27,16 +28,42 @@ namespace DamageTrackingFramework
         {
             if (!ped.Exists()) return;
             if (!PedDict.ContainsKey(ped)) PedDict.Add(ped, ped.Health);
-            TryGetPedDamage(ped, out var damage);
+
+            var previousHealth = PedDict[ped];
+            if (!TryGetPedDamage(ped, out var damage)) return;
+            GenerateDamageInfo(ped, previousHealth, damage);
+            ClearPedDamage(ped);
         }
 
-        private static bool TryGetPedDamage(Ped ped, out WeaponHash damage)
+        private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, WeaponDamageInfo damage)
+        {
+            var lastDamagedBone = (BoneId)ped.LastDamageBone;
+            var boneTuple = Lookups.BoneLookup[lastDamagedBone];
+            return new PedDamageInfo()
+            {
+                Damage = previousHealth - ped.Health,
+                WeaponInfo = damage,
+                BoneInfo = new BoneDamageInfo()
+                {
+                    BoneId = lastDamagedBone,
+                    Limb = boneTuple.limb,
+                    BodyRegion = boneTuple.bodyRegion
+                }
+            };
+        }
+
+        private static void ClearPedDamage(Ped ped)
+        {
+            ped.ClearLastDamageBone();
+            NativeFunction.Natives.xAC678E40BE7C74D2(ped);
+        }
+
+        private static bool TryGetPedDamage(Ped ped, out WeaponDamageInfo damage)
         {
             var pedAddr = ped.MemoryAddress;
-            damage = 0;
+            damage = default;
             unsafe
             {
-                // PedDict[ped] = ped.Health;
                 var damageHandler = *(IntPtr*)(pedAddr + 648);
                 if (damageHandler == IntPtr.Zero) return false;
                 var damageArray = *(int*)(damageHandler + 72);
@@ -45,32 +72,19 @@ namespace DamageTrackingFramework
                     PedDict[ped] = ped.Health;
                     return false;
                 }
+
                 var hashAddr = damageHandler + 8;
-                if (hashAddr == IntPtr.Zero || *(uint*)hashAddr == 0)
-                    return false;
-
-                damage = *(WeaponHash*)hashAddr;
-                var lastDamagedBone = (BoneId)ped.LastDamageBone;
-                try
+                if (hashAddr == IntPtr.Zero || *(WeaponHash*)hashAddr == 0 ||
+                    !Lookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr)) return false; // May not be necessary.
+                var weaponHash = *(WeaponHash*)hashAddr;
+                var damageTuple = Lookups.WeaponLookup[weaponHash];
+                damage = new WeaponDamageInfo()
                 {
-                    Game.DisplayHelp(
-                        $"Ped ~g~{ped.Model.Name} {ped.MemoryAddress.ToString("X8")} ~y~{(ped.IsDead ? "Dead" : "Alive")}\n" +
-                        $"~r~{Lookups.WeaponLookup[damage].Name} {Lookups.WeaponLookup[damage].DamageType.ToString()} {Lookups.WeaponLookup[damage].WeaponGroup.ToString()}\n" +
-                        $"{lastDamagedBone.ToString()} {Lookups.BoneLookup[lastDamagedBone].limb.ToString()} {Lookups.BoneLookup[lastDamagedBone].bodyRegion.ToString()}");
-                }
-                catch (KeyNotFoundException e)
-                {
-                    Game.LogTrivial(e.Data.Keys.GetType().ToString());
-                    Game.LogTrivial($"Damage = {damage} + Bone = {lastDamagedBone}");
-                    Game.DisplaySubtitle("~r~Error");
-                }
-                finally
-                {
-                    Game.LogTrivial($"Damage = {damage}");
-                }
-
-                ped.ClearLastDamageBone();
-                NativeFunction.Natives.xAC678E40BE7C74D2(ped);
+                    Hash = weaponHash,
+                    Name = damageTuple.Name,
+                    Group = damageTuple.DamageGroup,
+                    Type = damageTuple.DamageType
+                };
                 return true;
             }
         }
