@@ -25,6 +25,7 @@ namespace DamageTrackingFramework
         public static void OnUnload(bool Exit)
         {
             Game.DisplayNotification("DamageTrackingFramework by Variapolis ~r~ Unloaded");
+            PipeServer.Stop();
             _gameFiber.Abort();
         }
     }

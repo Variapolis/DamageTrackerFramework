@@ -20,10 +20,15 @@ namespace DamageTrackingFramework
 
         internal static void CheckPedsFiber()
         {
+            // var beforeCount = DamageSubCount;
+            // OnPedTookDamage += Test;
+            // Game.LogTrivial($"{beforeCount} to {DamageSubCount}");
+            PipeServer.Start();
             while (true)
             {
                 var peds = World.GetAllPeds();
-                foreach (var ped in peds) HandlePed(ped);
+                foreach (var ped in peds) HandlePed(ped); // TODO: Add peds to pipe queue here
+                // TODO: Flush ped queue here
                 CleanPedDictionary();
                 GameFiber.Yield();
             }
@@ -100,7 +105,6 @@ namespace DamageTrackingFramework
                 damage = new WeaponDamageInfo()
                 {
                     Hash = weaponHash,
-                    Name = damageTuple.Name,
                     Group = damageTuple.DamageGroup,
                     Type = damageTuple.DamageType
                 };
