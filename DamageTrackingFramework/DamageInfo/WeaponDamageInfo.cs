@@ -1,9 +1,11 @@
-﻿namespace DamageTrackingFramework.DamageInfo
+﻿using System;
+
+namespace DamageTrackingFramework.DamageInfo
 {
+    [Serializable]
     public struct WeaponDamageInfo
     {
         public WeaponHash Hash;
-        public string Name;
         public DamageType Type;
         public DamageGroup Group;
     }

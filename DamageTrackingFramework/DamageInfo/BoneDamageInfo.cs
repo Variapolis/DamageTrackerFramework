@@ -1,5 +1,8 @@
-﻿namespace DamageTrackingFramework.DamageInfo
+﻿using System;
+
+namespace DamageTrackingFramework.DamageInfo
 {
+    [Serializable]
     public struct BoneDamageInfo
     {
         public BoneId BoneId;
