@@ -4,7 +4,7 @@
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{94C2148E-3005-4946-9C57-2CC4D8BC250B}</ProjectGuid>
+        <ProjectGuid>{6E183B0B-3B11-48D0-A0F6-02B4AA3ECCEB}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
         <RootNamespace>DamageTrackingFramework</RootNamespace>
@@ -33,20 +33,15 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
-        <Reference Include="LSPD First Response">
-          <HintPath>..\References\LSPD First Response.dll</HintPath>
-        </Reference>
         <Reference Include="Microsoft.CSharp" />
-        <Reference Include="RAGENativeUI">
-          <HintPath>..\References\RAGENativeUI.dll</HintPath>
-        </Reference>
-        <Reference Include="RagePluginHook">
-          <HintPath>..\References\RagePluginHook.dll</HintPath>
+        <Reference Include="mscorlib" />
+        <Reference Include="RagePluginHook, Version=0.0.0.0, Culture=neutral, processorArchitecture=Amd64">
+          <HintPath>..\packages\RagePluginHook.1.98.0\lib\net472\RagePluginHook.dll</HintPath>
         </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
-        <Reference Include="System.Windows.Forms" />
+        <Reference Include="System.Numerics" />
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
@@ -60,9 +55,14 @@
         <Compile Include="DamageInfo\WeaponDamageInfo.cs" />
         <Compile Include="DamageInfo\WeaponHash.cs" />
         <Compile Include="DamageTracker.cs" />
+        <Compile Include="PipeServer.cs" />
         <Compile Include="Lookups.cs" />
         <Compile Include="Entry.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="App.config" />
+      <None Include="packages.config" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
