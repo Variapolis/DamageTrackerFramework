@@ -1,5 +1,6 @@
 ﻿using Rage;
 using Rage.Attributes;
+using Rage.Native;
 
 [assembly: Plugin("DamageTrackingFramework", Description = "A damage tracking utility for GTA V mods.",
     Author = "Variapolis", PrefersSingleInstance = true)]
@@ -14,6 +15,7 @@ namespace DamageTrackingFramework
         // ReSharper disable once UnusedMember.Global
         public static void Main()
         {
+            NativeFunction.Natives.x5BA652A0CD14DF2F(); // HACK: Fixes stuttering issue by warming up JIT with a useless native.
             _gameFiber = GameFiber.StartNew(DamageTracker.CheckPedsFiber);
             Game.LogTrivial("GameFiber started!");
             Game.DisplayNotification("DamageTrackerFramework by Variapolis ~g~Successfully Loaded");
