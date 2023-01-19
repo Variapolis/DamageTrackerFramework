@@ -7,7 +7,7 @@ namespace DamageTrackerLib
     {
         public static readonly Dictionary<BoneId, (Limb limb, BodyRegion bodyRegion)>
             BoneLookup =
-                new Dictionary<BoneId, (Limb limb, BodyRegion bodyRegion)>
+                new()
                 {
                     [BoneId.Root] = (Limb.Stomach, BodyRegion.Torso),
                     [BoneId.LeftThumb1] = (Limb.LeftArm, BodyRegion.Arms),
@@ -70,7 +70,7 @@ namespace DamageTrackerLib
 
         public static readonly Dictionary<WeaponHash, (string Name, DamageGroup DamageGroup, DamageType DamageType)>
             WeaponLookup =
-                new Dictionary<WeaponHash, (string Name, DamageGroup DamageGroup, DamageType DamageType)>
+                new()
                 {
                     [WeaponHash.Antique_Cavalry_Dagger] =
                         ("Antique Cavalry Dagger", DamageGroup.Melee, DamageType.MeleeStab),
