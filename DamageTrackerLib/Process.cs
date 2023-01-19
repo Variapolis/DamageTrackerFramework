@@ -1,10 +1,8 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.Serialization.Formatters.Binary;
 using DamageTrackerLib.DamageInfo;
 using Rage;
-using WeaponHash = DamageTrackerLib.DamageInfo.WeaponHash;
 
 namespace DamageTrackerLib
 {
