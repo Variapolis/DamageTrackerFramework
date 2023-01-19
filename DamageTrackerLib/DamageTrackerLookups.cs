@@ -3,7 +3,7 @@ using DamageTrackerLib.DamageInfo;
 
 namespace DamageTrackerLib
 {
-    public static class Lookups
+    public static class DamageTrackerLookups
     {
         public static readonly Dictionary<BoneId, (Limb limb, BodyRegion bodyRegion)>
             BoneLookup =
