@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DamageTrackingFramework.DamageInfo
+namespace DamageTrackerLib.DamageInfo
 {
     [Serializable]
     public struct WeaponDamageInfo

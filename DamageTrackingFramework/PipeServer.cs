@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO.Pipes;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
-using DamageTrackingFramework.DamageInfo;
 using Rage;
 
 namespace DamageTrackingFramework

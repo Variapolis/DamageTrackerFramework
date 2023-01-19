@@ -1,4 +1,4 @@
-namespace DamageTrackingFramework.DamageInfo
+namespace DamageTrackerLib.DamageInfo
 {
     public enum DamageGroup
     {

@@ -1,0 +1,4 @@
+﻿Copyright (C) 2015-2021 MulleDK19 and LMS, All Rights Reserved
+Users are permitted to use the binary contents of this package for development of RAGE Plugin Hook plugins.
+Do not reverse engineer, modify, upload, or redistribute the package contents in any way.
+Do not include RAGE Plugin Hook in your plugin releases.
