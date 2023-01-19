@@ -6,7 +6,7 @@ namespace DamageTrackerLib.DamageInfo
     [Serializable]
     public struct PedDamageInfo
     {
-        public Ped Ped;
+        public uint PedHandle;
         public int Damage;
         public WeaponDamageInfo WeaponInfo;
         public BoneDamageInfo BoneInfo;
