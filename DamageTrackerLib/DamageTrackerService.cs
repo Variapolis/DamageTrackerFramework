@@ -7,7 +7,7 @@ using Rage;
 namespace DamageTrackerLib
 {
     // ReSharper disable once UnusedType.Global
-    public static class Process
+    public static class DamageTrackerService
     {
         public const string Guid = "609a228f-ac5d-4308-849b-34ebafcc9778";
         private static readonly BinaryFormatter binaryFormatter = new();
