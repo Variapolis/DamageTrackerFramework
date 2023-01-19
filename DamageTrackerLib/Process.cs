@@ -21,11 +21,13 @@ namespace DamageTrackerLib
             using var stream = new MemoryStream();
             var buffer = new byte[mmfAccessor.Capacity];
             mmfAccessor.ReadArray(0, buffer, 0, buffer.Length);
-            stream.Write(buffer,0,buffer.Length);
-            Game.LogTrivial(stream.Length.ToString());
+            stream.Write(buffer, 0, buffer.Length);
             stream.Position = 0;
             var damagedPeds = (PedDamageInfo[])binaryFormatter.Deserialize(stream);
-            foreach (var ped in damagedPeds) Game.DisplayHelp(Enum.GetName(typeof(WeaponHash), ped.WeaponInfo.Hash), 2);
+            foreach (var pedDamageInfo in damagedPeds)
+            {
+                var ped = World.GetEntityByHandle<Ped>(pedDamageInfo.PedHandle);
+            }
         }
     }
 }
