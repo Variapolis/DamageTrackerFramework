@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DamageTrackingFramework.DamageInfo;
+using DamageTrackerLib;
+using DamageTrackerLib.DamageInfo;
 using Rage;
 using Rage.Native;
-using WeaponHash = DamageTrackingFramework.DamageInfo.WeaponHash;
+using WeaponHash = DamageTrackerLib.DamageInfo.WeaponHash;
 
 namespace DamageTrackingFramework
 {

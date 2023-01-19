@@ -1,5 +1,4 @@
-// ReSharper disable InconsistentNaming
-namespace DamageTrackingFramework.DamageInfo
+namespace DamageTrackerLib.DamageInfo
 {
     public enum DamageType
     {
