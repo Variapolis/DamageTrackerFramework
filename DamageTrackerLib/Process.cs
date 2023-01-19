@@ -1,51 +1,31 @@
 ﻿using System;
-using System.IO.Pipes;
+using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Runtime.Serialization.Formatters.Binary;
+using DamageTrackerLib.DamageInfo;
 using Rage;
-using Rage.Attributes;
-
-[assembly: Plugin("DamageTrackerLib", Description = "A plugin for testing.",
-    Author = "Variapolis",
-    PrefersSingleInstance = true)]
+using WeaponHash = DamageTrackerLib.DamageInfo.WeaponHash;
 
 namespace DamageTrackerLib
 {
     // ReSharper disable once UnusedType.Global
     public static class Process
     {
-    }
+        public const string Guid = "609a228f-ac5d-4308-849b-34ebafcc9778";
+        private static readonly BinaryFormatter binaryFormatter = new();
 
-    public static class PipeClient
-    {
-        private static readonly BinaryFormatter BinaryFormatter = new BinaryFormatter();
-
-        internal static void Run()
+        public static void Run()
         {
-            var pipeClient = new NamedPipeClientStream(".", "testpipe", PipeDirection.In);
-
-
-            Game.LogTrivial("Connecting to server.");
-            pipeClient.Connect();
-            Game.LogTrivial("Connected to server.");
-
-
-            // Validate the server's signature string.
-            try
-            {
-                Game.LogTrivial("Attempting to deserialize.");
-                var shit = (int)BinaryFormatter.Deserialize(pipeClient); // HACK: NEEDS TO BE CAST TO A PED DAMAGE INFO
-                Game.LogTrivial($"Success! {shit}");
-            }
-            // Catch the IOException that is raised if the pipe is broken or disconnected.
-            catch (Exception e)
-            {
-                Game.LogTrivial($"ERROR: {e.Message}");
-            }
-            finally
-            {
-                pipeClient.Close();
-                Game.LogTrivial("Client Closed.");
-            }
+            using var mmf = MemoryMappedFile.OpenExisting(Guid);
+            using var mmfAccessor = mmf.CreateViewAccessor();
+            using var stream = new MemoryStream();
+            var buffer = new byte[mmfAccessor.Capacity];
+            mmfAccessor.ReadArray(0, buffer, 0, buffer.Length);
+            stream.Write(buffer,0,buffer.Length);
+            Game.LogTrivial(stream.Length.ToString());
+            stream.Position = 0;
+            var damagedPeds = (PedDamageInfo[])binaryFormatter.Deserialize(stream);
+            foreach (var ped in damagedPeds) Game.DisplayHelp(Enum.GetName(typeof(WeaponHash), ped.WeaponInfo.Hash), 2);
         }
     }
 }

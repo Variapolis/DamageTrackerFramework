@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using DamageTrackerLib;
 using DamageTrackerLib.DamageInfo;
 using Rage;
@@ -9,31 +12,48 @@ using WeaponHash = DamageTrackerLib.DamageInfo.WeaponHash;
 
 namespace DamageTrackingFramework
 {
-    public static class DamageTracker
+    internal static class DamageTracker
     {
-        public delegate void PedDamagedDelegate(Ped ped, PedDamageInfo pedDamageInfo);
-
-        public static event PedDamagedDelegate OnPedTookDamage;
-        public static event PedDamagedDelegate OnPlayerTookDamage;
-
         // ReSharper disable once HeapView.ObjectAllocation.Evident
-        private static readonly Dictionary<Ped, int> PedDict = new Dictionary<Ped, int>();
+        private static readonly Dictionary<Ped, int> PedDict = new();
+
+        private static readonly List<PedDamageInfo> pedDamageList = new()
+        {
+            new PedDamageInfo
+            {
+                Damage = 0, PedHandle = Game.LocalPlayer.Character.Handle.Value, BoneInfo = new BoneDamageInfo(),
+                WeaponInfo = new WeaponDamageInfo()
+            }
+        };
+
+        private static readonly BinaryFormatter _binaryFormatter = new();
 
         internal static void CheckPedsFiber()
         {
-            // var beforeCount = DamageSubCount;
-            // OnPedTookDamage += Test;
-            // Game.LogTrivial($"{beforeCount} to {DamageSubCount}");
-            PipeServer.Start();
+            using var mmf = MemoryMappedFile.CreateOrOpen(Process.Guid, 10000,
+                MemoryMappedFileAccess.ReadWrite); // TODO: Replace with GUID from Lib
+            using var mmfAccessor = mmf.CreateViewAccessor();
+            using var stream = new MemoryStream();
             while (true)
             {
+                pedDamageList.Clear();
                 var peds = World.GetAllPeds();
-                foreach (var ped in peds) HandlePed(ped); // TODO: Add peds to pipe queue here
-                // TODO: Flush ped queue here
+                foreach (var ped in peds) HandlePed(ped);
+                SendPedData(mmfAccessor, stream);
+                Process.Run();
                 CleanPedDictionary();
                 GameFiber.Yield();
             }
             // ReSharper disable once FunctionNeverReturns
+        }
+
+        private static void SendPedData(MemoryMappedViewAccessor accessor, MemoryStream stream)
+        {
+            stream.SetLength(0);
+            _binaryFormatter.Serialize(stream, pedDamageList.ToArray());
+            var buffer = stream.ToArray();
+            accessor.WriteArray(0, buffer, 0, buffer.Length);
+            accessor.Flush();
         }
 
         private static void HandlePed(Ped ped)
@@ -43,32 +63,19 @@ namespace DamageTrackingFramework
 
             var previousHealth = PedDict[ped];
             if (!TryGetPedDamage(ped, out var damage)) return;
-            InvokeDamageEvent(ped, GenerateDamageInfo(ped, previousHealth, damage));
+            pedDamageList.Add(GenerateDamageInfo(ped, previousHealth, damage));
             ClearPedDamage(ped);
-        }
-
-        private static void InvokeDamageEvent(Ped ped, PedDamageInfo damageInfo)
-        {
-            switch (ped.IsPlayer)
-            {
-                case true when OnPlayerTookDamage != null:
-                    OnPlayerTookDamage(ped, damageInfo);
-                    break;
-                case false when OnPedTookDamage != null:
-                    OnPedTookDamage(ped, damageInfo);
-                    break;
-            }
         }
 
         private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, WeaponDamageInfo damage)
         {
             var lastDamagedBone = (BoneId)ped.LastDamageBone;
             var boneTuple = Lookups.BoneLookup[lastDamagedBone];
-            return new PedDamageInfo()
+            return new PedDamageInfo
             {
                 Damage = previousHealth - ped.Health,
                 WeaponInfo = damage,
-                BoneInfo = new BoneDamageInfo()
+                BoneInfo = new BoneDamageInfo
                 {
                     BoneId = lastDamagedBone,
                     Limb = boneTuple.limb,
@@ -103,7 +110,7 @@ namespace DamageTrackingFramework
                     !Lookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr)) return false; // May not be necessary.
                 var weaponHash = *(WeaponHash*)hashAddr;
                 var damageTuple = Lookups.WeaponLookup[weaponHash];
-                damage = new WeaponDamageInfo()
+                damage = new WeaponDamageInfo
                 {
                     Hash = weaponHash,
                     Group = damageTuple.DamageGroup,

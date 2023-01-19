@@ -35,7 +35,7 @@
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="DamageTrackerLib">
-          <HintPath>..\references\DamageTrackerLib.dll</HintPath>
+          <HintPath>..\DamageTrackerLib\bin\Release\DamageTrackerLib.dll</HintPath>
         </Reference>
         <Reference Include="Microsoft.CSharp" />
         <Reference Include="mscorlib" />
@@ -50,7 +50,6 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="DamageTracker.cs" />
-        <Compile Include="PipeServer.cs" />
         <Compile Include="Entry.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
