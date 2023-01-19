@@ -23,7 +23,7 @@ namespace DamageTrackingFramework
 
         internal static void CheckPedsFiber()
         {
-            using var mmf = MemoryMappedFile.CreateOrOpen(Process.Guid, 20000,
+            using var mmf = MemoryMappedFile.CreateOrOpen(DamageTrackerService.Guid, 20000,
                 MemoryMappedFileAccess.ReadWrite); // TODO: Replace with GUID from Lib
             using var mmfAccessor = mmf.CreateViewAccessor();
             using var stream = new MemoryStream();
@@ -33,7 +33,6 @@ namespace DamageTrackingFramework
                 var peds = World.GetAllPeds();
                 foreach (var ped in peds) HandlePed(ped);
                 SendPedData(mmfAccessor, stream);
-                Process.Run();
                 CleanPedDictionary();
                 GameFiber.Yield();
             }
@@ -63,7 +62,7 @@ namespace DamageTrackingFramework
         private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, WeaponDamageInfo damage)
         {
             var lastDamagedBone = (BoneId)ped.LastDamageBone;
-            var boneTuple = Lookups.BoneLookup[lastDamagedBone];
+            var boneTuple = DamageTrackerLookups.BoneLookup[lastDamagedBone];
             return new PedDamageInfo
             {
                 PedHandle = ped.Handle,
@@ -101,9 +100,9 @@ namespace DamageTrackingFramework
 
                 var hashAddr = damageHandler + 8;
                 if (hashAddr == IntPtr.Zero || *(WeaponHash*)hashAddr == 0 ||
-                    !Lookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr)) return false; // May not be necessary.
+                    !DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr)) return false; // May not be necessary.
                 var weaponHash = *(WeaponHash*)hashAddr;
-                var damageTuple = Lookups.WeaponLookup[weaponHash];
+                var damageTuple = DamageTrackerLookups.WeaponLookup[weaponHash];
                 damage = new WeaponDamageInfo
                 {
                     Hash = weaponHash,
