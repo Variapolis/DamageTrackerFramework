@@ -1,5 +1,4 @@
 using System;
-using Rage;
 
 namespace DamageTrackerLib.DamageInfo
 {
