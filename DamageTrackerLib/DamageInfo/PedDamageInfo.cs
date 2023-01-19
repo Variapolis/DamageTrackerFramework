@@ -1,7 +1,7 @@
 using System;
 using Rage;
 
-namespace DamageTrackingFramework.DamageInfo
+namespace DamageTrackerLib.DamageInfo
 {
     [Serializable]
     public struct PedDamageInfo

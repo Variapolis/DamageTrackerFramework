@@ -1,12 +1,11 @@
 using System.Collections.Generic;
-using DamageTrackingFramework.DamageInfo;
-using WeaponHash = DamageTrackingFramework.DamageInfo.WeaponHash;
+using DamageTrackerLib.DamageInfo;
 
-namespace DamageTrackingFramework
+namespace DamageTrackerLib
 {
-    internal static class Lookups
+    public static class Lookups
     {
-        internal static readonly Dictionary<BoneId, (Limb limb, BodyRegion bodyRegion)>
+        public static readonly Dictionary<BoneId, (Limb limb, BodyRegion bodyRegion)>
             BoneLookup =
                 new Dictionary<BoneId, (Limb limb, BodyRegion bodyRegion)>
                 {
@@ -69,7 +68,7 @@ namespace DamageTrackingFramework
                     [BoneId.LeftClavicle] = (Limb.Chest, BodyRegion.Torso),
                 };
 
-        internal static readonly Dictionary<WeaponHash, (string Name, DamageGroup DamageGroup, DamageType DamageType)>
+        public static readonly Dictionary<WeaponHash, (string Name, DamageGroup DamageGroup, DamageType DamageType)>
             WeaponLookup =
                 new Dictionary<WeaponHash, (string Name, DamageGroup DamageGroup, DamageType DamageType)>
                 {
