@@ -17,26 +17,19 @@ namespace DamageTrackingFramework
         // ReSharper disable once HeapView.ObjectAllocation.Evident
         private static readonly Dictionary<Ped, int> PedDict = new();
 
-        private static readonly List<PedDamageInfo> pedDamageList = new()
-        {
-            new PedDamageInfo
-            {
-                Damage = 0, PedHandle = Game.LocalPlayer.Character.Handle.Value, BoneInfo = new BoneDamageInfo(),
-                WeaponInfo = new WeaponDamageInfo()
-            }
-        };
+        private static readonly List<PedDamageInfo> PedDamageList = new();
 
-        private static readonly BinaryFormatter _binaryFormatter = new();
+        private static readonly BinaryFormatter Formatter = new();
 
         internal static void CheckPedsFiber()
         {
-            using var mmf = MemoryMappedFile.CreateOrOpen(Process.Guid, 10000,
+            using var mmf = MemoryMappedFile.CreateOrOpen(Process.Guid, 20000,
                 MemoryMappedFileAccess.ReadWrite); // TODO: Replace with GUID from Lib
             using var mmfAccessor = mmf.CreateViewAccessor();
             using var stream = new MemoryStream();
             while (true)
             {
-                pedDamageList.Clear();
+                PedDamageList.Clear();
                 var peds = World.GetAllPeds();
                 foreach (var ped in peds) HandlePed(ped);
                 SendPedData(mmfAccessor, stream);
@@ -50,7 +43,7 @@ namespace DamageTrackingFramework
         private static void SendPedData(MemoryMappedViewAccessor accessor, MemoryStream stream)
         {
             stream.SetLength(0);
-            _binaryFormatter.Serialize(stream, pedDamageList.ToArray());
+            Formatter.Serialize(stream, PedDamageList.ToArray());
             var buffer = stream.ToArray();
             accessor.WriteArray(0, buffer, 0, buffer.Length);
             accessor.Flush();
@@ -63,7 +56,7 @@ namespace DamageTrackingFramework
 
             var previousHealth = PedDict[ped];
             if (!TryGetPedDamage(ped, out var damage)) return;
-            pedDamageList.Add(GenerateDamageInfo(ped, previousHealth, damage));
+            PedDamageList.Add(GenerateDamageInfo(ped, previousHealth, damage));
             ClearPedDamage(ped);
         }
 
@@ -73,6 +66,7 @@ namespace DamageTrackingFramework
             var boneTuple = Lookups.BoneLookup[lastDamagedBone];
             return new PedDamageInfo
             {
+                PedHandle = ped.Handle,
                 Damage = previousHealth - ped.Health,
                 WeaponInfo = damage,
                 BoneInfo = new BoneDamageInfo
