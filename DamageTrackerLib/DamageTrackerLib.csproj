@@ -55,7 +55,6 @@
         <Compile Include="DamageTrackerLookups.cs" />
         <Compile Include="DamageTrackerService.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
-        <Compile Include="Wrapper.cs" />
     </ItemGroup>
     <ItemGroup>
       <None Include="packages.config" />
