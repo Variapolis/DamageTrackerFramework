@@ -43,10 +43,10 @@ namespace DamageTrackerLib
                 stream.SetLength(0);
                 var buffer = new byte[mmfAccessor.Capacity];
                 mmfAccessor.ReadArray(0, buffer, 0, buffer.Length);
-                if (IsByteArrayZero(buffer)) continue;
+                if (IsByteArrayZero(buffer)) continue; // TODO: Add error message
                 stream.Write(buffer, 0, buffer.Length);
                 stream.Position = 0;
-                if(stream.Length <= 0) continue;
+                if (stream.Length <= 0) continue; // TODO: Add error message
                 var damagedPeds = (PedDamageInfo[])binaryFormatter.Deserialize(stream);
                 foreach (var pedDamageInfo in damagedPeds)
                 {
