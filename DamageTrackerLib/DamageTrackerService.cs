@@ -18,6 +18,7 @@ namespace DamageTrackerLib
 
         private static readonly BinaryFormatter binaryFormatter = new();
         private static GameFiber _gameFiber;
+
         public static void Start()
         {
             if (_gameFiber != null)
@@ -25,6 +26,7 @@ namespace DamageTrackerLib
                 Game.LogTrivial("Tried to start DamageTrackerService while already running!");
                 return;
             }
+
             _gameFiber = GameFiber.StartNew(Run);
         }
 
@@ -32,16 +34,19 @@ namespace DamageTrackerLib
 
         private static void Run()
         {
-            using var mmf = MemoryMappedFile.OpenExisting(Guid);
+            using var mmf = MemoryMappedFile.CreateOrOpen(Guid, 20000, MemoryMappedFileAccess.ReadWrite);
             using var mmfAccessor = mmf.CreateViewAccessor();
             using var stream = new MemoryStream();
             while (true)
             {
+                GameFiber.Yield();
                 stream.SetLength(0);
                 var buffer = new byte[mmfAccessor.Capacity];
                 mmfAccessor.ReadArray(0, buffer, 0, buffer.Length);
+                if (IsByteArrayZero(buffer)) continue;
                 stream.Write(buffer, 0, buffer.Length);
                 stream.Position = 0;
+                if(stream.Length <= 0) continue;
                 var damagedPeds = (PedDamageInfo[])binaryFormatter.Deserialize(stream);
                 foreach (var pedDamageInfo in damagedPeds)
                 {
@@ -56,9 +61,16 @@ namespace DamageTrackerLib
                             break;
                     }
                 }
-                GameFiber.Yield();
             }
             // ReSharper disable once FunctionNeverReturns
+        }
+
+        private static bool IsByteArrayZero(byte[] array)
+        {
+            foreach (var element in array)
+                if (element != 0)
+                    return false;
+            return true;
         }
     }
 }
