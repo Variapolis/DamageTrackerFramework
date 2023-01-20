@@ -9,14 +9,24 @@ namespace DamageTrackerLib
     // ReSharper disable once UnusedType.Global
     public static class DamageTrackerService
     {
-        public const string Guid = "609a228f-ac5d-4308-849b-34ebafcc9778";
+        public const string Guid = "609a228f";
+
         public delegate void PedTookDamageDelegate(Ped ped, PedDamageInfo damageInfo);
+
         public static event PedTookDamageDelegate OnPedTookDamage;
         public static event PedTookDamageDelegate OnPlayerTookDamage;
-        
+
         private static readonly BinaryFormatter binaryFormatter = new();
-        private static readonly GameFiber _gameFiber = new(Run);
-        public static void Start() => _gameFiber.Start();
+        private static GameFiber _gameFiber;
+        public static void Start()
+        {
+            if (_gameFiber != null)
+            {
+                Game.LogTrivial("Tried to start DamageTrackerService while already running!");
+                return;
+            }
+            _gameFiber = GameFiber.StartNew(Run);
+        }
 
         public static void Stop() => _gameFiber.Abort();
 
@@ -27,6 +37,7 @@ namespace DamageTrackerLib
             using var stream = new MemoryStream();
             while (true)
             {
+                stream.SetLength(0);
                 var buffer = new byte[mmfAccessor.Capacity];
                 mmfAccessor.ReadArray(0, buffer, 0, buffer.Length);
                 stream.Write(buffer, 0, buffer.Length);
@@ -38,13 +49,14 @@ namespace DamageTrackerLib
                     switch (ped.IsPlayer)
                     {
                         case true when OnPlayerTookDamage != null:
-                            OnPlayerTookDamage(ped, pedDamageInfo);
+                            OnPlayerTookDamage.Invoke(ped, pedDamageInfo);
                             break;
                         case false when OnPedTookDamage != null:
-                            OnPedTookDamage(ped, pedDamageInfo);
+                            OnPedTookDamage.Invoke(ped, pedDamageInfo);
                             break;
                     }
                 }
+                GameFiber.Yield();
             }
             // ReSharper disable once FunctionNeverReturns
         }

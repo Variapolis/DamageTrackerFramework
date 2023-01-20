@@ -19,7 +19,7 @@ namespace DamageTrackerLib.DamageInfo
         Misc = 14,
         NonDamaging = 15,
         WaterCannon = 16,
-        Medical = 17,
+        Medical = 17, // I.E. Bleeding
         Drowning = 18,
         Animal = 19,
         Vehicle = 20,
