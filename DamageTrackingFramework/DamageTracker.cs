@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using DamageTrackerLib;
 using DamageTrackerLib.DamageInfo;
@@ -39,8 +40,10 @@ namespace DamageTrackingFramework
             // ReSharper disable once FunctionNeverReturns
         }
 
-        private static void SendPedData(MemoryMappedViewAccessor accessor, MemoryStream stream)
+        private static void SendPedData(MemoryMappedViewAccessor accessor, MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
         {
+            // var requiredSize = Marshal.SizeOf(PedDamageList) + (PedDamageList.Count * Marshal.SizeOf<PedDamageInfo>()) + 2000;
+            // if(requiredSize > accessor.Capacity)
             stream.SetLength(0);
             Formatter.Serialize(stream, PedDamageList.ToArray());
             var buffer = stream.ToArray();
@@ -83,7 +86,7 @@ namespace DamageTrackingFramework
             NativeFunction.Natives.xAC678E40BE7C74D2(ped);
         }
 
-        private static bool TryGetPedDamage(Ped ped, out WeaponDamageInfo damage)
+        private static bool TryGetPedDamage(Ped ped, out WeaponDamageInfo damage) // BUG: Fire doesn't damage per tick
         {
             var pedAddr = ped.MemoryAddress;
             damage = default;
