@@ -50,7 +50,7 @@ namespace DamageTrackingFramework
 
         private static void HandlePed(Ped ped)
         {
-            if (!ped.Exists()) return;
+            if (!ped.Exists() || !ped.IsHuman) return;
             if (!PedDict.ContainsKey(ped)) PedDict.Add(ped, ped.Health);
 
             var previousHealth = PedDict[ped];
