@@ -1,5 +1,8 @@
 namespace DamageTrackerLib.DamageInfo
 {
+    /// <summary>
+    /// Complete set of BoneIds. Should be cast-able to RagePluginHook BoneIds however, RPH has no "Root" bone which is 0.
+    /// </summary>
     public enum BoneId : ushort
     {
         LeftThumb1 = 4089, // 0x0FF9

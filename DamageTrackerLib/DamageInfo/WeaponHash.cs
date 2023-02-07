@@ -1,5 +1,8 @@
 namespace DamageTrackerLib.DamageInfo
 {
+    /// <summary>
+    /// Complete set of Weapon Hashes.
+    /// </summary>
     public enum WeaponHash : uint
     {
         Unknown = 0,
