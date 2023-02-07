@@ -15,7 +15,7 @@ namespace DamageTrackerLib.DamageInfo
         Environmental = 11,
         Gas = 12,
         WaterCannon = 13,
-        Medical = 14,
+        Bodily = 14,
         Drowning = 15
     }
 }
