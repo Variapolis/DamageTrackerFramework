@@ -2,6 +2,9 @@ using System;
 
 namespace DamageTrackerLib.DamageInfo
 {
+    /// <summary>
+    /// Holds all info for a Ped's damage.
+    /// </summary>
     [Serializable]
     public struct PedDamageInfo
     {

@@ -3,4 +3,5 @@
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=D_003A_005CUsers_005CVari_005CDesktop_005CWork_005CForks_005CTestCallouts_005CTestCallouts_005CReferences_005CDamageTrackingFramework_002Edll/@EntryIndexedValue">True</s:Boolean>
 	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;&#xD;
   &lt;Assembly Path="D:\Users\Vari\Desktop\Work\Forks\DamageTrackerPlugin\DamageTrackerUtility\packages\RagePluginHook.1.98.0\lib\net472\RagePluginHook.dll" /&gt;&#xD;
-&lt;/AssemblyExplorer&gt;</s:String></wpf:ResourceDictionary>
+&lt;/AssemblyExplorer&gt;</s:String>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Ped_0027s/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>

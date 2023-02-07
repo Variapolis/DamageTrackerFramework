@@ -11,14 +11,27 @@ namespace DamageTrackerLib
     {
         public const string Guid = "609a228f";
 
+        /// <summary>
+        /// Delegate to be used for TookDamage events.
+        /// </summary>
         public delegate void PedTookDamageDelegate(Ped victimPed, Ped attackerPed, PedDamageInfo damageInfo);
 
+        /// <summary>
+        /// Event invoked when a Ped takes damage. This event excludes the Player.
+        /// </summary>
         public static event PedTookDamageDelegate OnPedTookDamage;
+        
+        /// <summary>
+        /// Event invoked when the Player takes damage ONLY.
+        /// </summary>
         public static event PedTookDamageDelegate OnPlayerTookDamage;
 
         private static readonly BinaryFormatter binaryFormatter = new();
         private static GameFiber _gameFiber;
 
+        /// <summary>
+        /// Starts a GameFiber that collects incoming damage data from the DamageTracker plugin and turns them into events.
+        /// </summary>
         public static void Start()
         {
             if (_gameFiber != null)
@@ -30,6 +43,10 @@ namespace DamageTrackerLib
             _gameFiber = GameFiber.StartNew(Run);
         }
 
+
+        /// <summary>
+        /// Stops DamageTrackerService GameFiber.
+        /// </summary>
         public static void Stop() => _gameFiber.Abort();
 
         private static void Run()
@@ -51,7 +68,9 @@ namespace DamageTrackerLib
                 foreach (var pedDamageInfo in damagedPeds)
                 {
                     var ped = World.GetEntityByHandle<Ped>(pedDamageInfo.PedHandle);
-                    var attackerPed = pedDamageInfo.AttackerPedHandle == 0 ? null : World.GetEntityByHandle<Ped>(pedDamageInfo.AttackerPedHandle);
+                    var attackerPed = pedDamageInfo.AttackerPedHandle == 0
+                        ? null
+                        : World.GetEntityByHandle<Ped>(pedDamageInfo.AttackerPedHandle);
                     switch (ped.IsPlayer)
                     {
                         case true when OnPlayerTookDamage != null:
