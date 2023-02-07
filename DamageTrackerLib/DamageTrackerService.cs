@@ -68,6 +68,7 @@ namespace DamageTrackerLib
                 foreach (var pedDamageInfo in damagedPeds)
                 {
                     var ped = World.GetEntityByHandle<Ped>(pedDamageInfo.PedHandle);
+                    Game.LogTrivial($"DamageTrackerService: Ped {ped.Model.Name} was damaged.");
                     var attackerPed = pedDamageInfo.AttackerPedHandle == 0
                         ? null
                         : World.GetEntityByHandle<Ped>(pedDamageInfo.AttackerPedHandle);
