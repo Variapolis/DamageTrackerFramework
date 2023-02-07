@@ -5,6 +5,9 @@ namespace DamageTrackerLib
 {
     public static class DamageTrackerLookups
     {
+        /// <summary>
+        /// Lookups for the Bones. It is not recommended to change/use these values.
+        /// </summary>
         public static readonly Dictionary<BoneId, (Limb limb, BodyRegion bodyRegion)>
             BoneLookup =
                 new()
@@ -68,6 +71,10 @@ namespace DamageTrackerLib
                     [BoneId.LeftClavicle] = (Limb.Chest, BodyRegion.Torso),
                 };
 
+        
+        /// <summary>
+        /// Lookups for the Weapons. It is not recommended to change/use these values.
+        /// </summary>
         public static readonly Dictionary<WeaponHash, (DamageGroup DamageGroup, DamageType DamageType)>
             WeaponLookup =
                 new()
