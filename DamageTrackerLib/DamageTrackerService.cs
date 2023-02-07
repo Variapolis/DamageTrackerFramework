@@ -11,7 +11,7 @@ namespace DamageTrackerLib
     {
         public const string Guid = "609a228f";
 
-        public delegate void PedTookDamageDelegate(Ped ped, PedDamageInfo damageInfo);
+        public delegate void PedTookDamageDelegate(Ped victimPed, Ped attackerPed, PedDamageInfo damageInfo);
 
         public static event PedTookDamageDelegate OnPedTookDamage;
         public static event PedTookDamageDelegate OnPlayerTookDamage;
@@ -51,13 +51,14 @@ namespace DamageTrackerLib
                 foreach (var pedDamageInfo in damagedPeds)
                 {
                     var ped = World.GetEntityByHandle<Ped>(pedDamageInfo.PedHandle);
+                    var attackerPed = pedDamageInfo.AttackerPedHandle == 0 ? null : World.GetEntityByHandle<Ped>(pedDamageInfo.AttackerPedHandle);
                     switch (ped.IsPlayer)
                     {
                         case true when OnPlayerTookDamage != null:
-                            OnPlayerTookDamage.Invoke(ped, pedDamageInfo);
+                            OnPlayerTookDamage.Invoke(ped, attackerPed, pedDamageInfo);
                             break;
                         case false when OnPedTookDamage != null:
-                            OnPedTookDamage.Invoke(ped, pedDamageInfo);
+                            OnPedTookDamage.Invoke(ped, attackerPed, pedDamageInfo);
                             break;
                     }
                 }
