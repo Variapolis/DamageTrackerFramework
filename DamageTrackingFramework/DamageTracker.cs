@@ -40,7 +40,9 @@ namespace DamageTrackingFramework
             // ReSharper disable once FunctionNeverReturns
         }
 
-        private static void SendPedData(MemoryMappedViewAccessor accessor, MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
+        private static void
+            SendPedData(MemoryMappedViewAccessor accessor,
+                MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
         {
             // var requiredSize = Marshal.SizeOf(PedDamageList) + (PedDamageList.Count * Marshal.SizeOf<PedDamageInfo>()) + 2000;
             // if(requiredSize > accessor.Capacity)
@@ -66,9 +68,18 @@ namespace DamageTrackingFramework
         {
             var lastDamagedBone = (BoneId)ped.LastDamageBone;
             var boneTuple = DamageTrackerLookups.BoneLookup[lastDamagedBone];
+            PoolHandle attackerPed = 0;
+            if (ped.HasBeenDamagedByAnyPed)
+                foreach (var otherPed in PedDict.Keys)
+                {
+                    if (!otherPed.IsValid() || !ped.HasBeenDamagedBy(otherPed)) continue;
+                    attackerPed = otherPed.Handle;
+                    break;
+                }
             return new PedDamageInfo
             {
                 PedHandle = ped.Handle,
+                AttackerPedHandle = attackerPed,
                 Damage = previousHealth - ped.Health,
                 WeaponInfo = damage,
                 BoneInfo = new BoneDamageInfo
@@ -103,7 +114,8 @@ namespace DamageTrackingFramework
 
                 var hashAddr = damageHandler + 8;
                 if (hashAddr == IntPtr.Zero || *(WeaponHash*)hashAddr == 0 ||
-                    !DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr)) return false; // May not be necessary.
+                    !DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr))
+                    return false; // May not be necessary.
                 var weaponHash = *(WeaponHash*)hashAddr;
                 var damageTuple = DamageTrackerLookups.WeaponLookup[weaponHash];
                 damage = new WeaponDamageInfo
