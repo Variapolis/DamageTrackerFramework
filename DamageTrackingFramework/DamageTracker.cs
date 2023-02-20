@@ -108,7 +108,7 @@ namespace DamageTrackingFramework
                 if (damageHandler == IntPtr.Zero) return false;
                 var damageArray = *(int*)(damageHandler + 72);
                 var previousHealth = PedDict[ped];
-                if (ped.Health >= previousHealth.health || ped.Armor >= previousHealth.armour || damageArray <= 0)
+                if (ped.Health > previousHealth.health || ped.Armor > previousHealth.armour || damageArray <= 0)
                 {
                     PedDict[ped] = (ped.Health, ped.Armor);
                     return false;
