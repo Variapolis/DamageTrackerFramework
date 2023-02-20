@@ -11,6 +11,7 @@ namespace DamageTrackerLib.DamageInfo
         public uint PedHandle;
         public uint AttackerPedHandle;
         public int Damage;
+        public int ArmourDamage;
         public WeaponDamageInfo WeaponInfo;
         public BoneDamageInfo BoneInfo;
     }

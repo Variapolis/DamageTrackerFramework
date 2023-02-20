@@ -16,7 +16,7 @@ namespace DamageTrackingFramework
     internal static class DamageTracker
     {
         // ReSharper disable once HeapView.ObjectAllocation.Evident
-        private static readonly Dictionary<Ped, int> PedDict = new();
+        private static readonly Dictionary<Ped, (int health, int armour)> PedDict = new();
 
         private static readonly List<PedDamageInfo> PedDamageList = new();
 
@@ -56,15 +56,15 @@ namespace DamageTrackingFramework
         private static void HandlePed(Ped ped)
         {
             if (!ped.Exists() || !ped.IsHuman) return;
-            if (!PedDict.ContainsKey(ped)) PedDict.Add(ped, ped.Health);
+            if (!PedDict.ContainsKey(ped)) PedDict.Add(ped, (ped.Health, ped.Armor));
 
             var previousHealth = PedDict[ped];
             if (!TryGetPedDamage(ped, out var damage)) return;
-            PedDamageList.Add(GenerateDamageInfo(ped, previousHealth, damage));
+            PedDamageList.Add(GenerateDamageInfo(ped, previousHealth.health, previousHealth.armour, damage));
             ClearPedDamage(ped);
         }
 
-        private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, WeaponDamageInfo damage)
+        private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, int previousArmour, WeaponDamageInfo damage)
         {
             var lastDamagedBone = (BoneId)ped.LastDamageBone;
             var boneTuple = DamageTrackerLookups.BoneLookup[lastDamagedBone];
@@ -81,6 +81,7 @@ namespace DamageTrackingFramework
                 PedHandle = ped.Handle,
                 AttackerPedHandle = attackerPed,
                 Damage = previousHealth - ped.Health,
+                ArmourDamage = previousArmour - ped.Armor,
                 WeaponInfo = damage,
                 BoneInfo = new BoneDamageInfo
                 {
@@ -106,9 +107,10 @@ namespace DamageTrackingFramework
                 var damageHandler = *(IntPtr*)(pedAddr + 648);
                 if (damageHandler == IntPtr.Zero) return false;
                 var damageArray = *(int*)(damageHandler + 72);
-                if (ped.Health >= PedDict[ped] || damageArray <= 0)
+                var previousHealth = PedDict[ped];
+                if (ped.Health >= previousHealth.health || ped.Armor >= previousHealth.armour || damageArray <= 0)
                 {
-                    PedDict[ped] = ped.Health;
+                    PedDict[ped] = (ped.Health, ped.Armor);
                     return false;
                 }
 
