@@ -15,10 +15,11 @@ namespace DamageTrackingFramework
         // ReSharper disable once UnusedMember.Global
         public static void Main()
         {
-            NativeFunction.Natives.x5BA652A0CD14DF2F(); // HACK: Fixes stuttering issue by warming up JIT with a useless native.
+            NativeFunction.Natives
+                .x5BA652A0CD14DF2F(); // HACK: Fixes stuttering issue by warming up JIT with a useless native.
             _gameFiber = GameFiber.StartNew(DamageTracker.CheckPedsFiber);
             Game.LogTrivial("GameFiber started!");
-            Game.DisplayNotification("DamageTrackerFramework by Variapolis ~g~Successfully Loaded");
+            VersionChecker.CheckForUpdates();
             GameFiber.Hibernate();
         }
 
@@ -26,7 +27,9 @@ namespace DamageTrackingFramework
         // ReSharper disable once UnusedParameter.Global
         public static void OnUnload(bool Exit)
         {
-            Game.DisplayNotification("DamageTrackingFramework by Variapolis ~r~ Unloaded");
+            Game.DisplayNotification("commonmenu", "card_suit_hearts",
+                $"DamageTrackerFramework {VersionChecker.CurrentVersion}",
+                "~o~Unloaded", $"By Variapolis");
             _gameFiber.Abort();
         }
     }
