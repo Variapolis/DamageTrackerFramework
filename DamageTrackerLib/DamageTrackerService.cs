@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using DamageTrackerLib.DamageInfo;
 using Rage;
@@ -9,6 +10,8 @@ namespace DamageTrackerLib
     // ReSharper disable once UnusedType.Global
     public static class DamageTrackerService
     {
+        public static string CurrentVersion => Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
+        
         public const string Guid = "609a228f";
 
         /// <summary>
