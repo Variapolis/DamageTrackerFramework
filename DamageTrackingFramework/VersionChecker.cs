@@ -20,15 +20,14 @@ internal static class VersionChecker
         var webSuccess = false;
         try
         {
+            libraryVersionMatch = LibraryVersion == CurrentVersion;
             var receivedVersion = webClient
                 .DownloadString(
                     "https://www.lcpdfr.com/applications/downloadsng/interface/api.php?do=checkForUpdates&fileId=42767&textOnly=1")
                 .Trim();
-
             Game.LogTrivial(
                 $"DamageTrackerFramework loaded successfully. Online Version: {receivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
             frameworkUpToDate = receivedVersion == CurrentVersion;
-            libraryVersionMatch = LibraryVersion == CurrentVersion;
             webSuccess = true;
         }
         catch (WebException)
