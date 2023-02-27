@@ -95,6 +95,7 @@ namespace DamageTrackingFramework
         {
             ped.ClearLastDamageBone();
             NativeFunction.Natives.xAC678E40BE7C74D2(ped);
+            PedDict[ped] = (ped.Health, ped.Armor);
         }
 
         private static bool TryGetPedDamage(Ped ped, out WeaponDamageInfo damage) // BUG: Fire doesn't damage per tick
@@ -106,17 +107,12 @@ namespace DamageTrackingFramework
                 var damageHandler = *(IntPtr*)(pedAddr + 648);
                 if (damageHandler == IntPtr.Zero) return false;
                 var damageArray = *(int*)(damageHandler + 72);
-                var previousHealth = PedDict[ped];
-                if (ped.Health > previousHealth.health || ped.Armor > previousHealth.armour || damageArray <= 0)
-                {
-                    PedDict[ped] = (ped.Health, ped.Armor);
-                    return false;
-                }
-
+                if (damageArray == 0) return false;
+                if (!WasDamaged(ped, PedDict[ped])) return false;
                 var hashAddr = damageHandler + 8;
                 if (hashAddr == IntPtr.Zero || *(WeaponHash*)hashAddr == 0 ||
                     !DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr))
-                    return false; // May not be necessary.
+                    return false; // May not be necessary. TODO: Default value for unknown hashes and 0
                 var weaponHash = *(WeaponHash*)hashAddr;
                 var damageTuple = DamageTrackerLookups.WeaponLookup[weaponHash];
                 damage = new WeaponDamageInfo
@@ -127,6 +123,14 @@ namespace DamageTrackingFramework
                 };
                 return true;
             }
+        }
+
+        private static bool WasDamaged(Ped ped, (int health, int armour) previousHealth)
+        {
+            var wasDamaged = ped.Health < previousHealth.health || ped.Armor < previousHealth.armour;
+            if (ped.Health > previousHealth.health) PedDict[ped] = (ped.Health, PedDict[ped].armour);
+            if (ped.Armor > previousHealth.armour) PedDict[ped] = (PedDict[ped].health, ped.Armor);
+            return wasDamaged;
         }
 
         private static void CleanPedDictionary()
