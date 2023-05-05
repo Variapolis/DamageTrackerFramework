@@ -42,7 +42,7 @@ namespace DamageTrackerLib
                 Game.LogTrivial("Tried to start DamageTrackerService while already running!");
                 return;
             }
-
+            Game.LogTrivial("DamageTrackerService Started");
             _gameFiber = GameFiber.StartNew(() => Run(enableLogging));
         }
 
@@ -57,6 +57,7 @@ namespace DamageTrackerLib
                 Game.LogTrivial("Tried to stop DamageTrackerService while it was not running");
                 return;
             }
+            Game.LogTrivial("DamageTrackerService Stopped");
             _gameFiber.Abort();
         }
 
@@ -79,6 +80,7 @@ namespace DamageTrackerLib
                 foreach (var pedDamageInfo in damagedPeds)
                 {
                     var ped = World.GetEntityByHandle<Ped>(pedDamageInfo.PedHandle);
+                    if (!ped) continue;
                     if (enableLogging) Game.LogTrivial($"DamageTrackerService: Ped {ped.Model.Name} was damaged.");
                     var attackerPed = pedDamageInfo.AttackerPedHandle == 0
                         ? null
