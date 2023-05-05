@@ -35,7 +35,12 @@ namespace DamageTrackerLib
         /// <summary>
         /// Starts a GameFiber that collects incoming damage data from the DamageTracker plugin and turns them into events.
         /// </summary>
-        public static void Start(bool enableLogging = false)
+        public static void Start() => Start(false);
+
+        /// <summary>
+        /// Starts a GameFiber that collects incoming damage data from the DamageTracker plugin and turns them into events. Takes a boolean parameter that will enable logging damage.
+        /// </summary>
+        public static void Start(bool enableLogging)
         {
             if (_gameFiber != null)
             {
