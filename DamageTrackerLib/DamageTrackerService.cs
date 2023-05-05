@@ -86,7 +86,7 @@ namespace DamageTrackerLib
                 {
                     var ped = World.GetEntityByHandle<Ped>(pedDamageInfo.PedHandle);
                     if (!ped) continue;
-                    if (enableLogging) Game.LogTrivial($"DamageTrackerService: Ped {ped.Model.Name} was damaged.");
+                    if (enableLogging) Game.LogTrivial($"DamageTrackerService: Ped {ped.Model.Name} damaged by {pedDamageInfo.WeaponInfo.Hash}.");
                     var attackerPed = pedDamageInfo.AttackerPedHandle == 0
                         ? null
                         : World.GetEntityByHandle<Ped>(pedDamageInfo.AttackerPedHandle);
