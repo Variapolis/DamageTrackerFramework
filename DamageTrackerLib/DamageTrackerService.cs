@@ -32,6 +32,8 @@ namespace DamageTrackerLib
         private static readonly BinaryFormatter binaryFormatter = new();
         private static GameFiber _gameFiber;
 
+        public static bool IsRunning => _gameFiber != null;
+
         /// <summary>
         /// Starts a GameFiber that collects incoming damage data from the DamageTracker plugin and turns them into events.
         /// </summary>
