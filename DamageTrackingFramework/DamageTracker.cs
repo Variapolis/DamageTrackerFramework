@@ -110,10 +110,11 @@ namespace DamageTrackingFramework
                 if (damageArray == 0) return false;
                 if (!WasDamaged(ped, PedDict[ped])) return false;
                 var hashAddr = damageHandler + 8;
-                if (hashAddr == IntPtr.Zero || *(WeaponHash*)hashAddr == 0 ||
-                    !DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr))
-                    return false; // May not be necessary. TODO: Default value for unknown hashes and 0
-                var weaponHash = *(WeaponHash*)hashAddr;
+                if (hashAddr == IntPtr.Zero || *(WeaponHash*)hashAddr == 0) return false; // May not be necessary.
+                var weaponHash = DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr) ? *(WeaponHash*)hashAddr : WeaponHash.Unknown;
+                if (weaponHash == WeaponHash.Unknown)
+                    Game.LogTrivial(
+                        $"WARNING: {*(uint*)hashAddr} Hash is unknown. Please notify DamageTracker Developer at: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
                 var damageTuple = DamageTrackerLookups.WeaponLookup[weaponHash];
                 damage = new WeaponDamageInfo
                 {
