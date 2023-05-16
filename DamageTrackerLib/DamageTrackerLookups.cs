@@ -71,7 +71,7 @@ namespace DamageTrackerLib
                     [BoneId.LeftClavicle] = (Limb.Chest, BodyRegion.Torso),
                 };
 
-        
+
         /// <summary>
         /// Lookups for the Weapons. It is not recommended to change/use these values.
         /// </summary>
@@ -79,6 +79,7 @@ namespace DamageTrackerLib
             WeaponLookup =
                 new()
                 {
+                    [WeaponHash.Unknown] = (DamageGroup.Unknown, DamageType.Unknown),
                     [WeaponHash.Antique_Cavalry_Dagger] = (DamageGroup.Melee, DamageType.MeleeStab),
                     [WeaponHash.Baseball_Bat] = (DamageGroup.Melee, DamageType.MeleeBlunt),
                     [WeaponHash.Bottle] = (DamageGroup.Melee, DamageType.MeleeStab),
@@ -306,7 +307,21 @@ namespace DamageTrackerLib
                     [WeaponHash.Vehicle_Viseris_MG] = (DamageGroup.Bullet, DamageType.VehicleFirearm),
                     [WeaponHash.Vehicle_Volatol_Dual_MG] = (DamageGroup.Bullet, DamageType.VehicleFirearm),
                     [WeaponHash.Vehicle_Water_Cannon] = (DamageGroup.WaterCannon, DamageType.WaterCannon),
-                    [WeaponHash.Vehicle_Helicopter_Rotors] = (DamageGroup.Vehicle, DamageType.Vehicle)
+                    [WeaponHash.Vehicle_Helicopter_Rotors] = (DamageGroup.Vehicle, DamageType.Vehicle),
+                    // 0.9.9
+                    [WeaponHash.Military_Rifle] = (DamageGroup.Bullet, DamageType.Rifle),
+                    [WeaponHash.Heavy_Rifle] = (DamageGroup.Bullet, DamageType.Rifle),
+                    [WeaponHash.Service_Carbine] = (DamageGroup.Bullet, DamageType.Rifle),
+                    [WeaponHash.Precision_Rifle] = (DamageGroup.Bullet, DamageType.Sniper),
+                    [WeaponHash.Combat_Shotgun] = (DamageGroup.Bullet, DamageType.Shotgun),
+                    [WeaponHash.Compact_EMP_Launcher] = (DamageGroup.Explosion, DamageType.Launcher),
+                    [WeaponHash.Railgun_XM3] = (DamageGroup.Explosion, DamageType.Launcher),
+                    [WeaponHash.Stun_Gun_MP] = (DamageGroup.LessThanLethal, DamageType.LessThanLethal),
+                    [WeaponHash.Perico_Pistol] = (DamageGroup.Bullet, DamageType.Pistol),
+                    [WeaponHash.WM29_Pistol] = (DamageGroup.Bullet, DamageType.Pistol),
+                    [WeaponHash.Navy_Revolver] = (DamageGroup.Bullet, DamageType.Pistol),
+                    [WeaponHash.Ceramic_Pistol] = (DamageGroup.Bullet, DamageType.Pistol),
+                    [WeaponHash.Candy_Cane] = (DamageGroup.Melee, DamageType.MeleeBlunt),
                 };
     };
 }
