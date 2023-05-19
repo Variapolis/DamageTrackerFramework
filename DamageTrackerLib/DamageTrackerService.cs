@@ -32,27 +32,43 @@ namespace DamageTrackerLib
         private static readonly BinaryFormatter binaryFormatter = new();
         private static GameFiber _gameFiber;
 
+        public static bool IsRunning => _gameFiber != null;
+
         /// <summary>
         /// Starts a GameFiber that collects incoming damage data from the DamageTracker plugin and turns them into events.
         /// </summary>
-        public static void Start()
+        public static void Start() => Start(false);
+
+        /// <summary>
+        /// Starts a GameFiber that collects incoming damage data from the DamageTracker plugin and turns them into events. Takes a boolean parameter that will enable logging damage.
+        /// </summary>
+        public static void Start(bool enableLogging)
         {
             if (_gameFiber != null)
             {
                 Game.LogTrivial("Tried to start DamageTrackerService while already running!");
                 return;
             }
-
-            _gameFiber = GameFiber.StartNew(Run);
+            Game.LogTrivial("DamageTrackerService Started");
+            _gameFiber = GameFiber.StartNew(() => Run(enableLogging));
         }
 
 
         /// <summary>
         /// Stops DamageTrackerService GameFiber.
         /// </summary>
-        public static void Stop() => _gameFiber.Abort();
+        public static void Stop()
+        {
+            if (_gameFiber == null)
+            {
+                Game.LogTrivial("Tried to stop DamageTrackerService while it was not running");
+                return;
+            }
+            Game.LogTrivial("DamageTrackerService Stopped");
+            _gameFiber.Abort();
+        }
 
-        private static void Run()
+        private static void Run(bool enableLogging)
         {
             using var mmf = MemoryMappedFile.CreateOrOpen(Guid, 20000, MemoryMappedFileAccess.ReadWrite);
             using var mmfAccessor = mmf.CreateViewAccessor();
@@ -71,7 +87,8 @@ namespace DamageTrackerLib
                 foreach (var pedDamageInfo in damagedPeds)
                 {
                     var ped = World.GetEntityByHandle<Ped>(pedDamageInfo.PedHandle);
-                    Game.LogTrivial($"DamageTrackerService: Ped {ped.Model.Name} was damaged.");
+                    if (!ped) continue;
+                    if (enableLogging) Game.LogTrivial($"DamageTrackerService: Ped {ped.Model.Name} damaged by {pedDamageInfo.WeaponInfo.Hash}.");
                     var attackerPed = pedDamageInfo.AttackerPedHandle == 0
                         ? null
                         : World.GetEntityByHandle<Ped>(pedDamageInfo.AttackerPedHandle);

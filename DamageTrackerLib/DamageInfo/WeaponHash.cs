@@ -234,5 +234,21 @@ namespace DamageTrackerLib.DamageInfo
         Vehicle_Volatol_Dual_MG = 1150790720,
         Vehicle_Water_Cannon = 1741783703,
         Vehicle_Helicopter_Rotors = 2971687502,
+
+        // 0.9.9
+        Military_Rifle = 0x9D1F17E6,
+        Heavy_Rifle = 0xC78D71B4,
+        Service_Carbine = 3520460075,
+        Precision_Rifle = 1853742572,
+        Combat_Shotgun = 94989220,
+        Compact_EMP_Launcher = 3676729658,
+        Railgun_XM3 = 4272043364,
+        Stun_Gun_MP = 1171102963,
+        Perico_Pistol = 1470379660,
+        WM29_Pistol = 465894841,
+        Navy_Revolver = 2441047180,
+        Ceramic_Pistol = 727643628,
+        Candy_Cane = 1703483498,
+        Custom = 694201337,
     }
 }
