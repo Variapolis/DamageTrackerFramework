@@ -15,8 +15,7 @@ namespace DamageTrackingFramework
     internal static class DamageTracker
     {
         // ReSharper disable once HeapView.ObjectAllocation.Evident
-        private static readonly Dictionary<Ped, (int health, int armour)> PedDict = new();
-
+        private static readonly Dictionary<Ped, (int health, int armour)> PedHealthDict = new();
         private static readonly List<PedDamageInfo> PedDamageList = new();
 
         private static readonly BinaryFormatter Formatter = new();
@@ -33,7 +32,7 @@ namespace DamageTrackingFramework
                 var peds = World.GetAllPeds();
                 foreach (var ped in peds) HandlePed(ped);
                 SendPedData(mmfAccessor, stream);
-                CleanPedDictionary();
+                CleanPedDictionaries();
                 GameFiber.Yield();
             }
             // ReSharper disable once FunctionNeverReturns
@@ -43,8 +42,6 @@ namespace DamageTrackingFramework
             SendPedData(MemoryMappedViewAccessor accessor,
                 MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
         {
-            // var requiredSize = Marshal.SizeOf(PedDamageList) + (PedDamageList.Count * Marshal.SizeOf<PedDamageInfo>()) + 2000;
-            // if(requiredSize > accessor.Capacity)
             stream.SetLength(0);
             Formatter.Serialize(stream, PedDamageList.ToArray());
             var buffer = stream.ToArray();
@@ -55,33 +52,34 @@ namespace DamageTrackingFramework
         private static void HandlePed(Ped ped)
         {
             if (!ped.Exists() || !ped.IsHuman) return;
-            if (!PedDict.ContainsKey(ped)) PedDict.Add(ped, (ped.Health, ped.Armor));
+            if (!PedHealthDict.ContainsKey(ped)) PedHealthDict.Add(ped, (ped.Health, ped.Armor));
 
-            var previousHealth = PedDict[ped];
+            var previousHealth = PedHealthDict[ped];
             if (!TryGetPedDamage(ped, out var damage)) return;
             PedDamageList.Add(GenerateDamageInfo(ped, previousHealth.health, previousHealth.armour, damage));
             ClearPedDamage(ped);
         }
 
-        private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, int previousArmour, WeaponDamageInfo damage)
+        private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, int previousArmour,
+            WeaponHash damageHash)
         {
             var lastDamagedBone = (BoneId)ped.LastDamageBone;
             var boneTuple = DamageTrackerLookups.BoneLookup[lastDamagedBone];
-            PoolHandle attackerPed = 0;
-            if (ped.HasBeenDamagedByAnyPed)
-                foreach (var otherPed in PedDict.Keys)
-                {
-                    if (!otherPed.IsValid() || !ped.HasBeenDamagedBy(otherPed)) continue;
-                    attackerPed = otherPed.Handle;
-                    break;
-                }
+            var weaponTuple = DamageTrackerLookups.WeaponLookup[damageHash];
+            var attackerPed = GetAttackerPed(ped);
+
             return new PedDamageInfo
             {
                 PedHandle = ped.Handle,
                 AttackerPedHandle = attackerPed,
                 Damage = previousHealth - ped.Health,
                 ArmourDamage = previousArmour - ped.Armor,
-                WeaponInfo = damage,
+                WeaponInfo =
+                {
+                    Hash = damageHash,
+                    Type = weaponTuple.DamageType,
+                    Group = weaponTuple.DamageGroup
+                },
                 BoneInfo = new BoneDamageInfo
                 {
                     BoneId = lastDamagedBone,
@@ -91,54 +89,72 @@ namespace DamageTrackingFramework
             };
         }
 
-        private static void ClearPedDamage(Ped ped)
+        private static PoolHandle GetAttackerPed(Ped ped)
         {
-            ped.ClearLastDamageBone();
-            NativeFunction.Natives.xAC678E40BE7C74D2(ped);
-            PedDict[ped] = (ped.Health, ped.Armor);
+            PoolHandle attackerPed = 0;
+            if (!ped.HasBeenDamagedByAnyPed) return attackerPed;
+            foreach (var otherPed in PedHealthDict.Keys)
+            {
+                if (!otherPed.IsValid() || !ped.HasBeenDamagedBy(otherPed)) continue;
+                attackerPed = otherPed.Handle;
+                break;
+            }
+
+            return attackerPed;
         }
 
-        private static bool TryGetPedDamage(Ped ped, out WeaponDamageInfo damage) // BUG: Fire doesn't damage per tick
+        private static bool TryGetPedDamage(Ped ped, out WeaponHash damageHash)
         {
             var pedAddr = ped.MemoryAddress;
-            damage = default;
+            damageHash = default;
             unsafe
             {
                 var damageHandler = *(IntPtr*)(pedAddr + 648);
-                if (damageHandler == IntPtr.Zero) return false;
+                if (damageHandler == IntPtr.Zero) // Always true if the Ped has never taken damage.
+                {
+                    if (!WasDamaged(ped)) return false;
+                    damageHash = WeaponHash.Fall; // Triggers damage event if health went down due to falling.
+                    return true;
+                }
+
                 var damageArray = *(int*)(damageHandler + 72);
-                if (damageArray == 0) return false;
-                if (!WasDamaged(ped, PedDict[ped])) return false;
+                if (damageArray == 0) // true unless the ped took damage since LastDamage was cleared (Except Falling).
+                {
+                    if (!WasDamaged(ped)) return false;
+                    damageHash = WeaponHash.Fall; // Triggers damage event if health went down due to falling.
+                    return true;
+                }
+
                 var hashAddr = damageHandler + 8;
-                if (hashAddr == IntPtr.Zero || *(WeaponHash*)hashAddr == 0) return false; // May not be necessary.
-                var weaponHash = DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr) ? *(WeaponHash*)hashAddr : WeaponHash.Unknown;
-                if (weaponHash == WeaponHash.Unknown)
+                damageHash = DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr)
+                    ? *(WeaponHash*)hashAddr
+                    : WeaponHash.Unknown;
+                if (damageHash == WeaponHash.Unknown)
                     Game.LogTrivial(
                         $"WARNING: {*(uint*)hashAddr} Hash is unknown. Please notify DamageTracker Developer at: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
-                var damageTuple = DamageTrackerLookups.WeaponLookup[weaponHash];
-                damage = new WeaponDamageInfo
-                {
-                    Hash = weaponHash,
-                    Group = damageTuple.DamageGroup,
-                    Type = damageTuple.DamageType
-                };
                 return true;
             }
         }
 
-        private static bool WasDamaged(Ped ped, (int health, int armour) previousHealth)
+        private static bool WasDamaged(Ped ped)
         {
+            var previousHealth = PedHealthDict[ped];
             var wasDamaged = ped.Health < previousHealth.health || ped.Armor < previousHealth.armour;
-            if (ped.Health > previousHealth.health) PedDict[ped] = (ped.Health, PedDict[ped].armour);
-            if (ped.Armor > previousHealth.armour) PedDict[ped] = (PedDict[ped].health, ped.Armor);
             return wasDamaged;
         }
 
-        private static void CleanPedDictionary()
+        private static void ClearPedDamage(Ped ped)
         {
-            foreach (var ped in PedDict.Keys.ToList())
+            ped.ClearLastDamageBone();
+            NativeFunction.Natives.xAC678E40BE7C74D2(ped);
+            PedHealthDict[ped] = (ped.Health, ped.Armor);
+        }
+
+        private static void CleanPedDictionaries()
+        {
+            foreach (var ped in PedHealthDict.Keys.ToList())
                 if (!ped.Exists())
-                    PedDict.Remove(ped);
+                    PedHealthDict.Remove(ped);
         }
     }
 }
