@@ -11,6 +11,8 @@ For installation, the users MUST do the following:
 2. Install DamageTrackerFramework.dll to their plugins folder.
 3. DamageTrackerFramework ********MUST******** be started in RagePluginHook.
 
+## Requirements
+- [RagePluginHook](https://ragepluginhook.net/)
 ## Usage
 
 ### Plugin Examples
