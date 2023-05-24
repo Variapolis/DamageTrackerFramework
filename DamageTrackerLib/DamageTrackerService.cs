@@ -84,26 +84,29 @@ namespace DamageTrackerLib
                 stream.Position = 0;
                 if (stream.Length <= 0) continue; // TODO: Add error message
                 var damagedPeds = (PedDamageInfo[])binaryFormatter.Deserialize(stream);
-                foreach (var pedDamageInfo in damagedPeds)
-                {
-                    var ped = World.GetEntityByHandle<Ped>(pedDamageInfo.PedHandle);
-                    if (!ped) continue;
-                    if (enableLogging) Game.LogTrivial($"DamageTrackerService: Ped {ped.Model.Name} damaged by {pedDamageInfo.WeaponInfo.Hash}.");
-                    var attackerPed = pedDamageInfo.AttackerPedHandle == 0
-                        ? null
-                        : World.GetEntityByHandle<Ped>(pedDamageInfo.AttackerPedHandle);
-                    switch (ped.IsPlayer)
-                    {
-                        case true when OnPlayerTookDamage != null:
-                            OnPlayerTookDamage.Invoke(ped, attackerPed, pedDamageInfo);
-                            break;
-                        case false when OnPedTookDamage != null:
-                            OnPedTookDamage.Invoke(ped, attackerPed, pedDamageInfo);
-                            break;
-                    }
-                }
+                foreach (var pedDamageInfo in damagedPeds) InvokeDamageEvent(pedDamageInfo, enableLogging);
             }
             // ReSharper disable once FunctionNeverReturns
+        }
+
+        private static void InvokeDamageEvent(PedDamageInfo pedDamageInfo, bool enableLogging)
+        {
+            var ped = World.GetEntityByHandle<Ped>(pedDamageInfo.PedHandle);
+            if (!ped) return;
+            if (enableLogging)
+                Game.LogTrivial($"DamageTrackerService: Ped {ped.Model.Name} damaged by {pedDamageInfo.WeaponInfo.Hash}.");
+            var attackerPed = pedDamageInfo.AttackerPedHandle == 0
+                ? null
+                : World.GetEntityByHandle<Ped>(pedDamageInfo.AttackerPedHandle);
+            switch (ped.IsPlayer)
+            {
+                case true when OnPlayerTookDamage != null:
+                    OnPlayerTookDamage.Invoke(ped, attackerPed, pedDamageInfo);
+                    break;
+                case false when OnPedTookDamage != null:
+                    OnPedTookDamage.Invoke(ped, attackerPed, pedDamageInfo);
+                    break;
+            }
         }
 
         private static bool IsByteArrayZero(byte[] array)
