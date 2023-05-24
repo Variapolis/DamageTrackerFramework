@@ -10,6 +10,7 @@ namespace DamageTrackerLib
     // ReSharper disable once UnusedType.Global
     public static class DamageTrackerService
     {
+        // ReSharper disable once UnusedMember.Global
         public static string CurrentVersion => Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
         
         public const string Guid = "609a228f";
@@ -22,26 +23,31 @@ namespace DamageTrackerLib
         /// <summary>
         /// Event invoked when a Ped takes damage. This event excludes the Player.
         /// </summary>
+        // ReSharper disable once EventNeverSubscribedTo.Global
         public static event PedTookDamageDelegate OnPedTookDamage;
         
         /// <summary>
         /// Event invoked when the Player takes damage ONLY.
         /// </summary>
+        // ReSharper disable once EventNeverSubscribedTo.Global
         public static event PedTookDamageDelegate OnPlayerTookDamage;
 
-        private static readonly BinaryFormatter binaryFormatter = new();
+        private static readonly BinaryFormatter BinaryFormatter = new();
         private static GameFiber _gameFiber;
 
+        // ReSharper disable once UnusedMember.Global
         public static bool IsRunning => _gameFiber != null;
 
         /// <summary>
         /// Starts a GameFiber that collects incoming damage data from the DamageTracker plugin and turns them into events.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public static void Start() => Start(false);
 
         /// <summary>
         /// Starts a GameFiber that collects incoming damage data from the DamageTracker plugin and turns them into events. Takes a boolean parameter that will enable logging damage.
         /// </summary>
+        // ReSharper disable once MemberCanBePrivate.Global
         public static void Start(bool enableLogging)
         {
             if (_gameFiber != null)
@@ -57,6 +63,7 @@ namespace DamageTrackerLib
         /// <summary>
         /// Stops DamageTrackerService GameFiber.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public static void Stop()
         {
             if (_gameFiber == null)
@@ -83,7 +90,7 @@ namespace DamageTrackerLib
                 stream.Write(buffer, 0, buffer.Length);
                 stream.Position = 0;
                 if (stream.Length <= 0) continue; // TODO: Add error message
-                var damagedPeds = (PedDamageInfo[])binaryFormatter.Deserialize(stream);
+                var damagedPeds = (PedDamageInfo[])BinaryFormatter.Deserialize(stream);
                 foreach (var pedDamageInfo in damagedPeds) InvokeDamageEvent(pedDamageInfo, enableLogging);
             }
             // ReSharper disable once FunctionNeverReturns
