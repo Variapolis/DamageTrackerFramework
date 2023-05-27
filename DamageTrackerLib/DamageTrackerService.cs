@@ -1,9 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using DamageTrackerLib.DamageInfo;
 using Rage;
+using Rage.Native;
 
 namespace DamageTrackerLib
 {
@@ -12,7 +14,7 @@ namespace DamageTrackerLib
     {
         // ReSharper disable once UnusedMember.Global
         public static string CurrentVersion => Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
-        
+
         public const string Guid = "609a228f";
 
         /// <summary>
@@ -25,7 +27,7 @@ namespace DamageTrackerLib
         /// </summary>
         // ReSharper disable once EventNeverSubscribedTo.Global
         public static event PedTookDamageDelegate OnPedTookDamage;
-        
+
         /// <summary>
         /// Event invoked when the Player takes damage ONLY.
         /// </summary>
@@ -55,6 +57,7 @@ namespace DamageTrackerLib
                 Game.LogTrivial("Tried to start DamageTrackerService while already running!");
                 return;
             }
+
             Game.LogTrivial("DamageTrackerService Started");
             _gameFiber = GameFiber.StartNew(() => Run(enableLogging));
         }
@@ -71,6 +74,7 @@ namespace DamageTrackerLib
                 Game.LogTrivial("Tried to stop DamageTrackerService while it was not running");
                 return;
             }
+
             Game.LogTrivial("DamageTrackerService Stopped");
             _gameFiber.Abort();
         }
@@ -98,13 +102,14 @@ namespace DamageTrackerLib
 
         private static void InvokeDamageEvent(PedDamageInfo pedDamageInfo, bool enableLogging)
         {
-            var ped = World.GetEntityByHandle<Ped>(pedDamageInfo.PedHandle);
+            var ped = TryGetPedByHandle(pedDamageInfo.PedHandle);
             if (!ped) return;
             if (enableLogging)
-                Game.LogTrivial($"DamageTrackerService: Ped {ped.Model.Name} damaged by {pedDamageInfo.WeaponInfo.Hash}.");
-            var attackerPed = pedDamageInfo.AttackerPedHandle == 0
+                Game.LogTrivial(
+                    $"DamageTrackerService: Ped {ped.Model.Name} damaged by {pedDamageInfo.WeaponInfo.Hash}.");
+            var attackerPed = pedDamageInfo.AttackerPedHandle == default
                 ? null
-                : World.GetEntityByHandle<Ped>(pedDamageInfo.AttackerPedHandle);
+                : TryGetPedByHandle(pedDamageInfo.AttackerPedHandle);
             switch (ped.IsPlayer)
             {
                 case true when OnPlayerTookDamage != null:
@@ -114,6 +119,24 @@ namespace DamageTrackerLib
                     OnPedTookDamage.Invoke(ped, attackerPed, pedDamageInfo);
                     break;
             }
+        }
+
+        private static Ped TryGetPedByHandle(PoolHandle handle)
+        {
+            if (!NativeFunction.Natives.DOES_ENTITY_EXIST(handle))
+            {
+                Game.LogTrivial($"DamageTrackerService Warning: Ped Handle {handle.ToString()} does not exist.");
+                return null;
+            }
+            try
+            {
+                return World.GetEntityByHandle<Ped>(handle);
+            }
+            catch (ArgumentException)
+            {
+                Game.LogTrivial($"DamageTrackerService Exception Caught: Ped Handle ({handle.ToString()}) did not return an Entity.");
+            }
+            return null;
         }
 
         private static bool IsByteArrayZero(byte[] array)
