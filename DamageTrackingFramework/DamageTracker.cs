@@ -91,7 +91,7 @@ namespace DamageTrackingFramework
 
         private static PoolHandle GetAttackerPed(Ped ped)
         {
-            PoolHandle attackerPed = 0;
+            PoolHandle attackerPed = default;
             if (!ped.HasBeenDamagedByAnyPed) return attackerPed;
             foreach (var otherPed in PedHealthDict.Keys)
             {
