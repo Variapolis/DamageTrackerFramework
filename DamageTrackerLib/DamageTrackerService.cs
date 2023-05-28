@@ -123,7 +123,7 @@ namespace DamageTrackerLib
 
         private static Ped TryGetPedByHandle(PoolHandle handle)
         {
-            if (!NativeFunction.Natives.DOES_ENTITY_EXIST(handle))
+            if (!NativeFunction.Natives.DOES_ENTITY_EXIST<bool>((uint)handle))
             {
                 Game.LogTrivial($"DamageTrackerService Warning: Ped Handle {handle.ToString()} does not exist.");
                 return null;
