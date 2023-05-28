@@ -57,7 +57,8 @@ namespace DamageTrackerLib
                 Game.LogTrivial("Tried to start DamageTrackerService while already running!");
                 return;
             }
-
+            NativeFunction.Natives
+                .x5BA652A0CD14DF2F(); // HACK: Fixes stuttering issue by warming up JIT with a useless native.
             Game.LogTrivial("DamageTrackerService Started");
             _gameFiber = GameFiber.StartNew(() => Run(enableLogging));
         }
