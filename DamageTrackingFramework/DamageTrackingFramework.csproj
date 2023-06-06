@@ -34,9 +34,6 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
-        <Reference Include="DamageTrackerLib">
-          <HintPath>..\DamageTrackerLib\bin\Release\DamageTrackerLib.dll</HintPath>
-        </Reference>
         <Reference Include="Microsoft.CSharp" />
         <Reference Include="mscorlib" />
         <Reference Include="RagePluginHook, Version=0.0.0.0, Culture=neutral, processorArchitecture=Amd64">
@@ -60,6 +57,12 @@
     <ItemGroup>
       <None Include="App.config" />
       <None Include="packages.config" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\DamageTrackerLib\DamageTrackerLib.csproj">
+        <Project>{8ba678b1-d73d-4b13-8d42-f6750285e52a}</Project>
+        <Name>DamageTrackerLib</Name>
+      </ProjectReference>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
