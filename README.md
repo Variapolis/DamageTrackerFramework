@@ -1,6 +1,6 @@
 # DamageTrackerFramework Documentation
 
-DamageTrackerFramework is a GTA V Plugin that provides a framework and API for developers to get performant, reliable, and detailed events for when Peds are damaged.
+[DamageTrackerFramework](https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/) is a GTA V Plugin that provides a framework and API for developers to get performant, reliable, and detailed events for when Peds are damaged.
 
 ## License Information
 This project is licensed under the Eclipse Public License 2.0
