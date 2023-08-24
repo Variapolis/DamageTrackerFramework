@@ -54,6 +54,7 @@
         <Compile Include="DamageInfo\WeaponHash.cs" />
         <Compile Include="DamageTrackerLookups.cs" />
         <Compile Include="DamageTrackerService.cs" />
+        <Compile Include="HandleUtility.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Properties\AssemblyVersion.cs" />
     </ItemGroup>

@@ -87,7 +87,7 @@ namespace DamageTrackerLib.DamageInfo
         Ray_Minigun = 3056410471,
         Grenade = 2481070269,
         BZGas = 2694266206,
-        Smoke_Grenade = 4256991824,
+        Tear_Gas = 4256991824,
         Flare = 1233104067,
         Molotov = 615608432,
         Sticky_Bomb = 741814745,

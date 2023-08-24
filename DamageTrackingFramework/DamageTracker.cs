@@ -1,27 +1,58 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using DamageTrackerLib;
 using DamageTrackerLib.DamageInfo;
 using Rage;
+using Rage.Attributes;
 using Rage.Native;
 using WeaponHash = DamageTrackerLib.DamageInfo.WeaponHash;
 
 namespace DamageTrackingFramework
 {
+    internal struct HookDamageData
+    {
+        internal readonly PoolHandle VictimHandle;
+        internal readonly PoolHandle? AttackerHandle;
+        internal readonly uint WeaponHash;
+
+        public HookDamageData(PoolHandle victimHandle, PoolHandle? attackerHandle, uint weaponHash)
+        {
+            VictimHandle = victimHandle;
+            AttackerHandle = attackerHandle;
+            WeaponHash = weaponHash;
+        }
+    }
+
     internal static class DamageTracker
     {
         // ReSharper disable once HeapView.ObjectAllocation.Evident
         private static readonly Dictionary<Ped, (int health, int armour)> PedHealthDict = new();
         private static readonly List<PedDamageInfo> PedDamageList = new();
-
+        private static readonly List<HookDamageData> HookData = new();
+        public static EasyHook.LocalHook hook;
         private static readonly BinaryFormatter Formatter = new();
+
+        public delegate void EntityLogDamageDelegate(IntPtr victim, IntPtr culprit, uint weapon, uint time, bool a5);
+
+        public delegate uint GetScriptGuidForEntityDelegate(IntPtr fwEntity);
+
+        public static GetScriptGuidForEntityDelegate GetScriptGuidForEntity;
+        public static EntityLogDamageDelegate origEntityLogDamage;
 
         internal static void CheckPedsFiber()
         {
+            IntPtr addr = Game.FindPattern("48 F7 F9 49 8B 48 08 48 63 D0 C1 E0 08 0F B6 1C 11 03 D8");
+            if (addr == IntPtr.Zero) return;
+            addr -= 0x68;
+            GetScriptGuidForEntity = Marshal.GetDelegateForFunctionPointer<GetScriptGuidForEntityDelegate>(addr);
+            Hook();
+
             using var mmf = MemoryMappedFile.CreateOrOpen(DamageTrackerService.Guid, 20000,
                 MemoryMappedFileAccess.ReadWrite); // TODO: Replace with GUID from Lib
             using var mmfAccessor = mmf.CreateViewAccessor();
@@ -29,8 +60,8 @@ namespace DamageTrackingFramework
             while (true)
             {
                 PedDamageList.Clear();
-                var peds = World.GetAllPeds();
-                foreach (var ped in peds) HandlePed(ped);
+                CreateDamageInfo();
+                CachePedHealth();
                 SendPedData(mmfAccessor, stream);
                 CleanPedDictionaries();
                 GameFiber.Yield();
@@ -38,26 +69,29 @@ namespace DamageTrackingFramework
             // ReSharper disable once FunctionNeverReturns
         }
 
-        private static void
-            SendPedData(MemoryMappedViewAccessor accessor,
-                MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
+        public static void Hook()
         {
-            stream.SetLength(0);
-            Formatter.Serialize(stream, PedDamageList.ToArray());
-            var buffer = stream.ToArray();
-            accessor.WriteArray(0, buffer, 0, buffer.Length);
-            accessor.Flush();
+            IntPtr addr = Game.FindPattern("21 4D D8 21 4D DC 41 8B D8");
+
+            if (addr == IntPtr.Zero) throw new EntryPointNotFoundException("Pattern could not be found");
+
+            addr -= 0x1F;
+            origEntityLogDamage = Marshal.GetDelegateForFunctionPointer<EntityLogDamageDelegate>(addr);
+            EntityLogDamageDelegate detour = EntityLogDamageDetour;
+            hook = EasyHook.LocalHook.Create(addr, detour, null);
+            hook.ThreadACL.SetExclusiveACL(new[] { 0 });
+            Game.DisplaySubtitle("Hooked");
         }
 
-        private static void HandlePed(Ped ped)
+        private static void CreateDamageInfo()
         {
-            if (!ped.Exists() || !ped.IsHuman) return;
-            if (!PedHealthDict.ContainsKey(ped)) PedHealthDict.Add(ped, (ped.Health, ped.Armor));
-
-            var previousHealth = PedHealthDict[ped];
-            if (!TryGetPedDamage(ped, out var damage)) return;
-            PedDamageList.Add(GenerateDamageInfo(ped, previousHealth.health, previousHealth.armour, damage));
-            ClearPedDamage(ped);
+            foreach (var data in HookData)
+            {
+                var victim = HandleUtility.TryGetPedByHandle(data.VictimHandle);
+                // if (victim == null) continue;
+                // Game.DisplaySubtitle(victim?.Model.Name ?? "Nothing");
+                // PedDamageList.Add(GenerateDamageInfo(data));
+            }
         }
 
         private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, int previousArmour,
@@ -66,12 +100,11 @@ namespace DamageTrackingFramework
             var lastDamagedBone = (BoneId)ped.LastDamageBone;
             var boneTuple = DamageTrackerLookups.BoneLookup[lastDamagedBone];
             var weaponTuple = DamageTrackerLookups.WeaponLookup[damageHash];
-            var attackerPed = GetAttackerPed(ped);
 
             return new PedDamageInfo
             {
                 PedHandle = ped.Handle,
-                AttackerPedHandle = attackerPed,
+                AttackerPedHandle = default,
                 Damage = previousHealth - ped.Health,
                 ArmourDamage = previousArmour - ped.Armor,
                 WeaponInfo =
@@ -89,65 +122,36 @@ namespace DamageTrackingFramework
             };
         }
 
-        private static PoolHandle GetAttackerPed(Ped ped)
+        private static void CachePedHealth()
         {
-            PoolHandle attackerPed = default;
-            if (!ped.HasBeenDamagedByAnyPed) return attackerPed;
-            foreach (var otherPed in PedHealthDict.Keys)
+            foreach (var ped in World.EnumeratePeds()) PedHealthDict[ped] = (ped.Health, ped.Armor);
+        }
+
+        private static void EntityLogDamageDetour(IntPtr victim, IntPtr culprit, uint weapon, uint time, bool a5)
+        {
+            if (victim != IntPtr.Zero) // Check if victim is null
             {
-                if (!otherPed.IsValid() || !ped.HasBeenDamagedBy(otherPed)) continue;
-                attackerPed = otherPed.Handle;
-                break;
+                var victimHandle = new PoolHandle(GetScriptGuidForEntity(victim));
+                PoolHandle? attackerHandle =
+                    culprit == IntPtr.Zero ? null : new PoolHandle(GetScriptGuidForEntity(culprit));
+                HookData.Add(new HookDamageData(victimHandle, attackerHandle, weapon));
+                var ped = HandleUtility.TryGetPedByHandle(victimHandle);
+                if (ped != null) Game.LogTrivial(ped.Health.ToString());
             }
 
-            return attackerPed;
+            origEntityLogDamage(victim, culprit, weapon, time, a5);
         }
 
-        private static bool TryGetPedDamage(Ped ped, out WeaponHash damageHash)
+
+        private static void
+            SendPedData(MemoryMappedViewAccessor accessor,
+                MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
         {
-            var pedAddr = ped.MemoryAddress;
-            damageHash = default;
-            unsafe
-            {
-                var damageHandler = *(IntPtr*)(pedAddr + 648);
-                if (damageHandler == IntPtr.Zero) // Always true if the Ped has never taken damage.
-                {
-                    if (!WasDamaged(ped)) return false;
-                    damageHash = WeaponHash.Fall; // Triggers damage event if health went down due to falling.
-                    return true;
-                }
-
-                var damageArray = *(int*)(damageHandler + 72);
-                if (damageArray == 0) // true unless the ped took damage since LastDamage was cleared (Except Falling).
-                {
-                    if (!WasDamaged(ped)) return false;
-                    damageHash = WeaponHash.Fall; // Triggers damage event if health went down due to falling.
-                    return true;
-                }
-
-                var hashAddr = damageHandler + 8;
-                damageHash = DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr)
-                    ? *(WeaponHash*)hashAddr
-                    : WeaponHash.Unknown;
-                if (damageHash == WeaponHash.Unknown)
-                    Game.LogTrivial(
-                        $"WARNING: {*(uint*)hashAddr} Hash is unknown. Please notify DamageTracker Developer at: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
-                return true;
-            }
-        }
-
-        private static bool WasDamaged(Ped ped)
-        {
-            var previousHealth = PedHealthDict[ped];
-            var wasDamaged = ped.Health < previousHealth.health || ped.Armor < previousHealth.armour;
-            return wasDamaged;
-        }
-
-        private static void ClearPedDamage(Ped ped)
-        {
-            ped.ClearLastDamageBone();
-            NativeFunction.Natives.xAC678E40BE7C74D2(ped);
-            PedHealthDict[ped] = (ped.Health, ped.Armor);
+            stream.SetLength(0);
+            Formatter.Serialize(stream, PedDamageList.ToArray());
+            var buffer = stream.ToArray();
+            accessor.WriteArray(0, buffer, 0, buffer.Length);
+            accessor.Flush();
         }
 
         private static void CleanPedDictionaries()
@@ -155,6 +159,17 @@ namespace DamageTrackingFramework
             foreach (var ped in PedHealthDict.Keys.ToList())
                 if (!ped.Exists())
                     PedHealthDict.Remove(ped);
+            HookData.Clear();
+        }
+
+        public static void Dispose() => hook.Dispose();
+
+        [ConsoleCommand]
+        public static void DeformAdvancedFromVehicle(Vector3 relativeVehicleOffset)
+        {
+            var vehicle = Game.LocalPlayer.Character.CurrentVehicle;
+            var offset =  vehicle.GetOffsetPosition(relativeVehicleOffset);
+            NativeFunction.Natives.SET_VEHICLE_DAMAGE(vehicle, offset.X, offset.Y, offset.Z, 100f, 100f, false);
         }
     }
 }

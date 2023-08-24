@@ -31,6 +31,7 @@ namespace DamageTrackingFramework
                 $"DamageTrackerFramework {VersionChecker.CurrentVersion}",
                 "~o~Unloaded", $"By Variapolis");
             _gameFiber.Abort();
+            DamageTracker.Dispose();
         }
     }
 }

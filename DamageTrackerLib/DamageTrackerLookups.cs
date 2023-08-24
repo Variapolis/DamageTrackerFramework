@@ -161,7 +161,7 @@ namespace DamageTrackerLib
                     [WeaponHash.Ray_Minigun] = (DamageGroup.Bullet, DamageType.Launcher),
                     [WeaponHash.Grenade] = (DamageGroup.Explosion, DamageType.Explosive),
                     [WeaponHash.BZGas] = (DamageGroup.Gas, DamageType.Gas),
-                    [WeaponHash.Smoke_Grenade] = (DamageGroup.NonDamaging, DamageType.ThrowableNonLethal),
+                    [WeaponHash.Tear_Gas] = (DamageGroup.NonDamaging, DamageType.ThrowableNonLethal),
                     [WeaponHash.Flare] = (DamageGroup.NonDamaging, DamageType.ThrowableNonLethal),
                     [WeaponHash.Molotov] = (DamageGroup.Fire, DamageType.Fire),
                     [WeaponHash.Sticky_Bomb] = (DamageGroup.Explosion, DamageType.Explosive),
