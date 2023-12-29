@@ -15,12 +15,11 @@ The DamageTrackerFramework release can be downloaded from the [LSPDFR Website](h
 
 For installation, the users MUST do the following:
 
-1. Install DamageTrackerLib.dll to their GTA V directory.
-2. Install DamageTrackerFramework.dll to their plugins folder.
-3. DamageTrackerFramework ********MUST******** be started in RagePluginHook.
+1. Copy DamageTrackerLib.dll and the plugins folder to their GTA V directory.
+2. DamageTrackerFramework ********MUST******** be started in RagePluginHook.
 
 ## Requirements
-- [RagePluginHook](https://ragepluginhook.net/)
+- [RagePluginHook](https://discord.gg/ragepluginhook)
 ## Usage
 
 ### Plugin Examples
