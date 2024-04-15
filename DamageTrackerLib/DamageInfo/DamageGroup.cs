@@ -16,6 +16,6 @@ namespace DamageTrackerLib.DamageInfo
         Gas = 12,
         WaterCannon = 13,
         Bodily = 14,
-        Drowning = 15
+        Drowning = 15,
     }
 }
