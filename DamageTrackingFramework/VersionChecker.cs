@@ -16,11 +16,10 @@ internal static class VersionChecker
     {
         var webClient = new WebClient();
         var frameworkUpToDate = false;
-        var libraryVersionMatch = false;
         var webSuccess = false;
         try
         {
-            libraryVersionMatch = LibraryVersion == CurrentVersion;
+            var libraryVersionMatch = LibraryVersion == CurrentVersion;
             var receivedVersion = webClient
                 .DownloadString(
                     "https://www.lcpdfr.com/applications/downloadsng/interface/api.php?do=checkForUpdates&fileId=42767&textOnly=1")
@@ -29,6 +28,20 @@ internal static class VersionChecker
                 $"DamageTrackerFramework loaded successfully. Online Version: {receivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
             frameworkUpToDate = receivedVersion == CurrentVersion;
             webSuccess = true;
+            if (!frameworkUpToDate)
+            {
+                Game.LogTrivial(
+                    $"[VERSION OUTDATED] Online Version: {receivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
+                Game.LogTrivial("Please update to latest version here: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
+            }
+            if (!libraryVersionMatch)
+            {
+                Game.LogTrivial(
+                    $"[VERSION MISMATCH] Online Version: {receivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
+                Game.LogTrivial("DamageTrackerLib version does not match DamageTrackerFramework. Ensure both DLLs are up to date.");
+                Game.DisplayNotification(
+                    "~r~WARNING: ~w~Version Mismatch for DamageTrackerLib.dll! ~o~Ensure both DLL files are up to date.");
+            }
         }
         catch (WebException)
         {
@@ -41,16 +54,6 @@ internal static class VersionChecker
             Game.DisplayNotification("commonmenu", "card_suit_hearts", $"DamageTrackerFramework {CurrentVersion}",
                 "~g~Successfully Loaded",
                 $"By Variapolis \nVersion is {(webSuccess ? frameworkUpToDate ? "~g~Up To Date" : "~r~Out Of Date" : "~o~Version Check Failed")}");
-            if (!frameworkUpToDate)
-                Game.LogTrivial(
-                    "[VERSION OUTDATED] Please update to latest version here: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
-            if (!libraryVersionMatch)
-            {
-                Game.LogTrivial(
-                    "[VERSION MISMATCH] DamageTrackerLib version does not match DamageTrackerFramework. Ensure both DLLs are up to date.");
-                Game.DisplayNotification(
-                    "~r~WARNING: ~w~Version Mismatch for DamageTrackerLib.dll! ~o~Ensure both DLL files are up to date.");
-            }
         }
     }
 }
