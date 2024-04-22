@@ -114,6 +114,7 @@ namespace DamageTrackingFramework
         {
             var pedAddr = ped.MemoryAddress;
             damageHash = default;
+            // If data exists from hook, use hook values.
             if (PedDetourHandler.PedHookData.TryGetValue(ped.Handle, out var data))
             {
                 damageHash = DamageTrackerLookups.WeaponLookup.ContainsKey((WeaponHash)data.WeaponHash)
@@ -125,9 +126,9 @@ namespace DamageTrackingFramework
                         $"WARNING: {data.WeaponHash:X8} Hash is unknown. Please notify DamageTracker Developer at: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
                     UnknownWeaponHashCache.Add(damageHash);
                 }
-
-                return true;
+                return WasDamaged(ped);
             }
+            // Otherwise use legacy system (For odd injuries like bleeding and falling)
             unsafe
             {
                 var damageHandler = *(IntPtr*)(pedAddr + 648);
@@ -157,7 +158,6 @@ namespace DamageTrackingFramework
                         $"WARNING: {(uint)hash:X8} Hash is unknown. Please notify DamageTracker Developer at: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
                     UnknownWeaponHashCache.Add(hash);
                 }
-
                 return true;
             }
         }
@@ -165,8 +165,7 @@ namespace DamageTrackingFramework
         private static bool WasDamaged(Ped ped)
         {
             var previousHealth = PedHealthDict[ped];
-            var wasDamaged = ped.Health < previousHealth.health || ped.Armor < previousHealth.armour;
-            return wasDamaged;
+            return ped.Health < previousHealth.health || ped.Armor < previousHealth.armour;
         }
 
         private static void ClearPedDamage(Ped ped)
