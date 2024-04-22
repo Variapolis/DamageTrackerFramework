@@ -19,7 +19,7 @@ For installation, the users MUST do the following:
 2. DamageTrackerFramework ********MUST******** be started in RagePluginHook.
 
 ## Requirements
-- [RagePluginHook](https://ragepluginhook.net/Downloads.aspx?Category=1)
+- [RagePluginHook](https://discord.com/invite/z8N5P9MCRx) (found in the [#neccesities channel](https://canary.discord.com/channels/165029423840493568/954822498329981009))
 ## Usage
 
 ### Plugin Examples
