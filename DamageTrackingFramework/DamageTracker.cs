@@ -20,6 +20,8 @@ namespace DamageTrackingFramework
 
         private static readonly BinaryFormatter Formatter = new();
 
+        private static readonly HashSet<WeaponHash> UnknownWeaponHashCache = new();
+        
         internal static void CheckPedsFiber()
         {
             using var mmf = MemoryMappedFile.CreateOrOpen(DamageTrackerService.Guid, 20000,
@@ -129,9 +131,11 @@ namespace DamageTrackingFramework
                 damageHash = DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr)
                     ? *(WeaponHash*)hashAddr
                     : WeaponHash.Unknown;
-                if (damageHash == WeaponHash.Unknown)
+                if (damageHash == WeaponHash.Unknown && !UnknownWeaponHashCache.Contains(*(WeaponHash*)hashAddr)){
                     Game.LogTrivial(
                         $"WARNING: {*(uint*)hashAddr} Hash is unknown. Please notify DamageTracker Developer at: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
+                    UnknownWeaponHashCache.Add(*(WeaponHash*)hashAddr);
+                }
                 return true;
             }
         }
