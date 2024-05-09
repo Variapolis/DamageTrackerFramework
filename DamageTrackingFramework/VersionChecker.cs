@@ -24,8 +24,6 @@ internal static class VersionChecker
                 .DownloadString(
                     "https://www.lcpdfr.com/applications/downloadsng/interface/api.php?do=checkForUpdates&fileId=42767&textOnly=1")
                 .Trim();
-            Game.LogTrivial(
-                $"DamageTrackerFramework loaded successfully. Online Version: {receivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
             frameworkUpToDate = receivedVersion == CurrentVersion;
             webSuccess = true;
             if (!frameworkUpToDate)
@@ -46,15 +44,20 @@ internal static class VersionChecker
         }
         catch (WebException)
         {
+            Game.LogTrivial(
+                $"[VERSION CHECK FAILED] Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
+            Game.LogTrivial("Version check failed, your internet may be disabled, or LCPDFR may be down.");
             Game.DisplayNotification("commonmenu", "mp_alerttriangle", "~y~DamageTrackerFramework Version Check",
                 "Version check ~r~Failed.",
                 "Please ensure you are ~o~online~w~.");
         }
         finally
         {
+            Game.LogTrivial(
+                $"DamageTrackerFramework loaded. Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
             Game.DisplayNotification("commonmenu", "card_suit_hearts", $"DamageTrackerFramework {CurrentVersion}",
                 "~g~Successfully Loaded",
-                $"By Variapolis \nVersion is {(webSuccess ? frameworkUpToDate ? "~g~Up To Date" : "~r~Out Of Date" : "~o~Version Check Failed")}");
+                $"By Variapolis \nVersion is {(webSuccess ? (frameworkUpToDate ? "~g~Up To Date" : "~r~Out Of Date") : "~o~Version Check Failed")}");
         }
     }
 }
