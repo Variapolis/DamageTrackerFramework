@@ -122,7 +122,7 @@ namespace DamageTrackerLSPDFRExample
                              $"\n~w~Weapon: ~y~{damageInfo.WeaponInfo.Hash.ToString()} {damageInfo.WeaponInfo.Type.ToString()} {damageInfo.WeaponInfo.Group.ToString()}" +
                              $"\n~w~Bone: ~r~{damageInfo.BoneInfo.BoneId.ToString()} {damageInfo.BoneInfo.Limb.ToString()} {damageInfo.BoneInfo.BodyRegion.ToString()}");
 
-        public override void Finally() => Game.Displtification("DTF LSPDFR Example Unloaded.");
+        public override void Finally() => Game.DisplayNotification("DTF LSPDFR Example Unloaded.");
     }
 }
 ```
