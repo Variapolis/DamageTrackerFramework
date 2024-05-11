@@ -20,6 +20,8 @@ For installation, the users MUST do the following:
 
 ## Requirements
 - [RagePluginHook](https://discord.gg/ragepluginhook)
+## Issues
+- Gas Grenades do not work.
 ## Usage
 
 ### Plugin Examples
@@ -120,7 +122,7 @@ namespace DamageTrackerLSPDFRExample
                              $"\n~w~Weapon: ~y~{damageInfo.WeaponInfo.Hash.ToString()} {damageInfo.WeaponInfo.Type.ToString()} {damageInfo.WeaponInfo.Group.ToString()}" +
                              $"\n~w~Bone: ~r~{damageInfo.BoneInfo.BoneId.ToString()} {damageInfo.BoneInfo.Limb.ToString()} {damageInfo.BoneInfo.BodyRegion.ToString()}");
 
-        public override void Finally() => Game.DisplayNotification("DTF LSPDFR Example Unloaded.");
+        public override void Finally() => Game.Displtification("DTF LSPDFR Example Unloaded.");
     }
 }
 ```
@@ -130,7 +132,7 @@ namespace DamageTrackerLSPDFRExample
 
 ### DamageTrackerService Start() and Stop()
 
-`DamageTrackerService.Start()` and `DamageTrackerService.Stop()` are used to start and stop a GameFiber which collects data sent by the DamageTrackerFramework. This GameFiber will not start if it is already running, however, it is recommended to stop it when unloading a plugin to prevent any potential memory leaks.
+`DamageTrackerService.Start()` and `DamageTrackerService.Stop()` are used to start and stop a GameFiber which collects data the DamageTrackerFramework sends. This GameFiber will not start if it is already running, however, it is recommended to stop it when unloading a plugin to prevent any potential memory leaks.
 
 ### Event Delegate
 
@@ -142,7 +144,7 @@ public delegate void PedTookDamageDelegate(Ped victimPed, Ped attackerPed, PedDa
 
 ### Damage Info
 
-Damage info about peds is provided via a PedDamageInfo struct. This holds all the information about how a ped was damaged, including the handle for the ped, the handle for the attacker, and the damage received to health, as well as damage to armor.
+Damage info about peds is provided via a PedDamageInfo struct. This holds all the information about how a ped was damaged, including the handle for the ped, the handle for the attacker, the damage received to health, and damage to armor.
 
 ```csharp
 [Serializable]
