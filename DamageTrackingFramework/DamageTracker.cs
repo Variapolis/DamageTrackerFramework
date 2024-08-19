@@ -16,7 +16,9 @@ namespace DamageTrackingFramework
     {
         // ReSharper disable once HeapView.ObjectAllocation.Evident
         private static readonly Dictionary<Ped, (int health, int armour)> PedHealthDict = new();
+        private static readonly Dictionary<Vehicle, int> VehHealthDict = new();
         private static readonly List<PedDamageInfo> PedDamageList = new();
+        private static readonly List<Vehicle> VehDamageList = new();
 
         private static readonly BinaryFormatter Formatter = new();
 
@@ -32,8 +34,10 @@ namespace DamageTrackingFramework
             {
                 PedDamageList.Clear();
                 var peds = World.GetAllPeds();
-                foreach (var ped in peds) HandlePed(ped);
-                SendPedData(mmfAccessor, stream);
+                // foreach (var ped in peds) HandlePed(ped);
+                // SendPedData(mmfAccessor, stream);
+                foreach (var veh in World.EnumerateVehicles()) HandleVehicle(veh);
+                SendVehData(mmfAccessor, stream);
                 CleanPedDictionaries();
                 GameFiber.Yield();
             }
@@ -50,16 +54,37 @@ namespace DamageTrackingFramework
             accessor.WriteArray(0, buffer, 0, buffer.Length);
             accessor.Flush();
         }
+        
+        private static void
+            SendVehData(MemoryMappedViewAccessor accessor,
+                MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
+        {
+            foreach (var veh in VehDamageList)
+            {
+                Game.LogTrivial(veh.Model.Name);
+            }
+        }
 
         private static void HandlePed(Ped ped)
         {
             if (!ped.Exists() || !ped.IsHuman) return;
             if (!PedHealthDict.ContainsKey(ped)) PedHealthDict.Add(ped, (ped.Health, ped.Armor));
-
+        
             var previousHealth = PedHealthDict[ped];
             if (!TryGetPedDamage(ped, out var damage)) return;
             PedDamageList.Add(GenerateDamageInfo(ped, previousHealth.health, previousHealth.armour, damage));
             ClearPedDamage(ped);
+        }
+        
+        private static void HandleVehicle(Vehicle veh)
+        {
+            if (!veh) return;
+            if (!VehHealthDict.ContainsKey(veh)) VehHealthDict.Add(veh, veh.Health);
+
+            var previousHealth = VehHealthDict[veh];
+            if (!TryGetVehDamage(veh, out var damage)) return;
+            VehDamageList.Add(veh);
+            ClearVehDamage(veh);
         }
 
         private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, int previousArmour,
@@ -105,6 +130,41 @@ namespace DamageTrackingFramework
             return attackerPed;
         }
 
+        private static bool TryGetVehDamage(Vehicle vehicle, out WeaponHash damageHash)
+        {
+            var pedAddr = vehicle.MemoryAddress;
+            damageHash = default;
+            unsafe
+            {
+                var damageHandler = *(IntPtr*)(pedAddr + 648);
+                if (damageHandler == IntPtr.Zero) // Always true if the Ped has never taken damage.
+                {
+                    if (!WasDamaged(vehicle)) return false;
+                    damageHash = WeaponHash.Fall; // Triggers damage event if health went down due to falling.
+                    return true;
+                }
+
+                var damageArray = *(int*)(damageHandler + 72);
+                if (damageArray == 0) // true unless the ped took damage since LastDamage was cleared (Except Falling).
+                {
+                    if (!WasDamaged(vehicle)) return false;
+                    damageHash = WeaponHash.Fall; // Triggers damage event if health went down due to falling.
+                    return true;
+                }
+
+                var hashAddr = damageHandler + 8;
+                damageHash = DamageTrackerLookups.WeaponLookup.ContainsKey(*(WeaponHash*)hashAddr)
+                    ? *(WeaponHash*)hashAddr
+                    : WeaponHash.Unknown;
+                if (damageHash == WeaponHash.Unknown && !UnknownWeaponHashCache.Contains(*(WeaponHash*)hashAddr)){
+                    Game.LogTrivial(
+                        $"WARNING: {*(uint*)hashAddr} Hash is unknown. Please notify DamageTracker Developer at: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
+                    UnknownWeaponHashCache.Add(*(WeaponHash*)hashAddr);
+                }
+                return true;
+            }
+        }
+        
         private static bool TryGetPedDamage(Ped ped, out WeaponHash damageHash)
         {
             var pedAddr = ped.MemoryAddress;
@@ -139,11 +199,20 @@ namespace DamageTrackingFramework
                 return true;
             }
         }
+        
+        
 
         private static bool WasDamaged(Ped ped)
         {
             var previousHealth = PedHealthDict[ped];
             var wasDamaged = ped.Health < previousHealth.health || ped.Armor < previousHealth.armour;
+            return wasDamaged;
+        }
+        
+        private static bool WasDamaged(Vehicle veh)
+        {
+            var previousHealth = VehHealthDict[veh];
+            var wasDamaged = veh.Health < previousHealth; 
             return wasDamaged;
         }
 
@@ -152,6 +221,12 @@ namespace DamageTrackingFramework
             ped.ClearLastDamageBone();
             NativeFunction.Natives.xAC678E40BE7C74D2(ped);
             PedHealthDict[ped] = (ped.Health, ped.Armor);
+        }
+        
+        private static void ClearVehDamage(Vehicle veh)
+        {
+            NativeFunction.Natives.xAC678E40BE7C74D2(veh);
+            VehHealthDict[veh] = veh.Health;
         }
 
         private static void CleanPedDictionaries()
