@@ -34,6 +34,19 @@ namespace DamageTrackerLib
         // ReSharper disable once EventNeverSubscribedTo.Global
         public static event PedTookDamageDelegate OnPlayerTookDamage;
 
+        
+        /// <summary>
+        /// Delegate to be used for TookDamage events.
+        /// </summary>
+        public delegate void VehTookDamageDelegate(Vehicle vehicle, Ped attackerPed, VehDamageInfo damageInfo);
+
+        /// <summary>
+        /// Event invoked when a Vehicle takes damage.
+        /// </summary>
+        // ReSharper disable once EventNeverSubscribedTo.Global
+        public static event VehTookDamageDelegate OnVehicleTookDamage;
+        
+        
         private static readonly BinaryFormatter BinaryFormatter = new();
         private static GameFiber _gameFiber;
 
@@ -95,13 +108,14 @@ namespace DamageTrackerLib
                 stream.Write(buffer, 0, buffer.Length);
                 stream.Position = 0;
                 if (stream.Length <= 0) continue; // TODO: Add error message
-                var damagedPeds = (PedDamageInfo[])BinaryFormatter.Deserialize(stream);
-                foreach (var pedDamageInfo in damagedPeds) InvokeDamageEvent(pedDamageInfo, enableLogging);
+                var damageData = (DamageInfoData)BinaryFormatter.Deserialize(stream);
+                foreach (var pedDamageInfo in damageData.PedDamageInfoList) InvokePedDamageEvent(pedDamageInfo, enableLogging);
+                foreach (var vehDamageInfo in damageData.VehDamageInfoList) InvokeVehicleDamageEvent(vehDamageInfo, enableLogging);
             }
             // ReSharper disable once FunctionNeverReturns
         }
 
-        private static void InvokeDamageEvent(PedDamageInfo pedDamageInfo, bool enableLogging)
+        private static void InvokePedDamageEvent(PedDamageInfo pedDamageInfo, bool enableLogging)
         {
             var ped = TryGetPedByHandle(pedDamageInfo.PedHandle);
             if (!ped) return;
@@ -121,7 +135,22 @@ namespace DamageTrackerLib
                     break;
             }
         }
+        
+        private static void InvokeVehicleDamageEvent(VehDamageInfo vehDamageInfo, bool enableLogging)
+        {
+            var veh = TryGetVehByHandle(vehDamageInfo.VehHandle);
+            if (!veh) return;
+            if (enableLogging)
+                Game.LogTrivial(
+                    $"DamageTrackerService: Ped {veh.Model.Name} damaged by {vehDamageInfo.WeaponInfo.Hash}.");
+            var attackerPed = vehDamageInfo.AttackerPedHandle == default
+                ? null
+                : TryGetPedByHandle(vehDamageInfo.AttackerPedHandle);
+            OnVehicleTookDamage?.Invoke(veh, attackerPed, vehDamageInfo);
+        }
 
+        
+        // TODO: Make this a template instead.
         private static Ped TryGetPedByHandle(PoolHandle handle)
         {
             if (!NativeFunction.Natives.DOES_ENTITY_EXIST<bool>((uint)handle))
@@ -132,6 +161,24 @@ namespace DamageTrackerLib
             try
             {
                 return World.GetEntityByHandle<Ped>(handle);
+            }
+            catch (ArgumentException)
+            {
+                Game.LogTrivial($"DamageTrackerService Exception Caught: Ped Handle ({handle.ToString()}) did not return an Entity.");
+            }
+            return null;
+        }
+        
+        private static Vehicle TryGetVehByHandle(PoolHandle handle)
+        {
+            if (!NativeFunction.Natives.DOES_ENTITY_EXIST<bool>((uint)handle))
+            {
+                Game.LogTrivial($"DamageTrackerService Warning: Ped Handle {handle.ToString()} does not exist.");
+                return null;
+            }
+            try
+            {
+                return World.GetEntityByHandle<Vehicle>(handle);
             }
             catch (ArgumentException)
             {
