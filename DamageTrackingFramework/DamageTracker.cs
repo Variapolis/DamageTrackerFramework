@@ -15,10 +15,11 @@ namespace DamageTrackingFramework
     internal static class DamageTracker
     {
         // ReSharper disable once HeapView.ObjectAllocation.Evident
+        private static DamageInfoData _damageInfos;
         private static readonly Dictionary<Ped, (int health, int armour)> PedHealthDict = new();
         private static readonly Dictionary<Vehicle, int> VehHealthDict = new();
         private static readonly List<PedDamageInfo> PedDamageList = new();
-        private static readonly List<Vehicle> VehDamageList = new();
+        private static readonly List<VehDamageInfo> VehDamageList = new();
 
         private static readonly BinaryFormatter Formatter = new();
 
@@ -34,36 +35,47 @@ namespace DamageTrackingFramework
             {
                 PedDamageList.Clear();
                 var peds = World.GetAllPeds();
-                // foreach (var ped in peds) HandlePed(ped);
-                // SendPedData(mmfAccessor, stream);
+                foreach (var ped in peds) HandlePed(ped);
                 foreach (var veh in World.EnumerateVehicles()) HandleVehicle(veh);
-                SendVehData(mmfAccessor, stream);
+                SendData(mmfAccessor, stream);
                 CleanPedDictionaries();
                 GameFiber.Yield();
             }
             // ReSharper disable once FunctionNeverReturns
         }
 
-        private static void
-            SendPedData(MemoryMappedViewAccessor accessor,
-                MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
+        private static void SendData(MemoryMappedViewAccessor accessor,
+            MemoryStream stream)
         {
+            _damageInfos.PedDamageInfoList = PedDamageList.ToArray();
+            _damageInfos.VehDamageInfoList = VehDamageList.ToArray();
             stream.SetLength(0);
-            Formatter.Serialize(stream, PedDamageList.ToArray());
+            Formatter.Serialize(stream, _damageInfos);
             var buffer = stream.ToArray();
             accessor.WriteArray(0, buffer, 0, buffer.Length);
             accessor.Flush();
         }
         
-        private static void
-            SendVehData(MemoryMappedViewAccessor accessor,
-                MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
-        {
-            foreach (var veh in VehDamageList)
-            {
-                Game.LogTrivial(veh.Model.Name);
-            }
-        }
+        // private static void
+        //     SendPedData(MemoryMappedViewAccessor accessor,
+        //         MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
+        // {
+        //     stream.SetLength(0);
+        //     Formatter.Serialize(stream, PedDamageList.ToArray());
+        //     var buffer = stream.ToArray();
+        //     accessor.WriteArray(0, buffer, 0, buffer.Length);
+        //     accessor.Flush();
+        // }
+        //
+        // private static void
+        //     SendVehData(MemoryMappedViewAccessor accessor,
+        //         MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
+        // {
+        //     foreach (var veh in VehDamageList)
+        //     {
+        //         Game.LogTrivial(veh.Model.Name);
+        //     }
+        // }
 
         private static void HandlePed(Ped ped)
         {
@@ -72,7 +84,7 @@ namespace DamageTrackingFramework
         
             var previousHealth = PedHealthDict[ped];
             if (!TryGetPedDamage(ped, out var damage)) return;
-            PedDamageList.Add(GenerateDamageInfo(ped, previousHealth.health, previousHealth.armour, damage));
+            PedDamageList.Add(GeneratePedDamageInfo(ped, previousHealth.health, previousHealth.armour, damage));
             ClearPedDamage(ped);
         }
         
@@ -83,11 +95,33 @@ namespace DamageTrackingFramework
 
             var previousHealth = VehHealthDict[veh];
             if (!TryGetVehDamage(veh, out var damage)) return;
-            VehDamageList.Add(veh);
+            VehDamageList.Add(GenerateVehDamageInfo(veh, previousHealth, damage));
             ClearVehDamage(veh);
         }
 
-        private static PedDamageInfo GenerateDamageInfo(Ped ped, int previousHealth, int previousArmour,
+        private static VehDamageInfo GenerateVehDamageInfo(Vehicle veh, int previousHealth,
+            WeaponHash damageHash)
+        {
+            veh.GetLastCollision(out Vector3 lastCollisionPosition);
+            var weaponTuple = DamageTrackerLookups.WeaponLookup[damageHash];
+            var attackerPed = GetAttackerPed(veh);
+
+            return new VehDamageInfo
+            {
+                VehHandle = veh.Handle,
+                AttackerPedHandle = attackerPed,
+                Damage = previousHealth - veh.Health,
+                WeaponInfo =
+                {
+                    Hash = damageHash,
+                    Type = weaponTuple.DamageType,
+                    Group = weaponTuple.DamageGroup
+                },
+                LastCollisionPosition = lastCollisionPosition
+            };
+        }
+        
+        private static PedDamageInfo GeneratePedDamageInfo(Ped ped, int previousHealth, int previousArmour,
             WeaponHash damageHash)
         {
             var lastDamagedBone = (BoneId)ped.LastDamageBone;
@@ -116,7 +150,7 @@ namespace DamageTrackingFramework
             };
         }
 
-        private static PoolHandle GetAttackerPed(Ped ped)
+        private static PoolHandle GetAttackerPed(Entity ped)
         {
             PoolHandle attackerPed = default;
             if (!ped.HasBeenDamagedByAnyPed) return attackerPed;
@@ -199,8 +233,6 @@ namespace DamageTrackingFramework
                 return true;
             }
         }
-        
-        
 
         private static bool WasDamaged(Ped ped)
         {

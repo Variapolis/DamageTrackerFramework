@@ -48,9 +48,11 @@
         <Compile Include="DamageInfo\BoneDamageInfo.cs" />
         <Compile Include="DamageInfo\BoneId.cs" />
         <Compile Include="DamageInfo\DamageGroup.cs" />
+        <Compile Include="DamageInfo\DamageInfoData.cs" />
         <Compile Include="DamageInfo\DamageType.cs" />
         <Compile Include="DamageInfo\Limb.cs" />
         <Compile Include="DamageInfo\PedDamageInfo.cs" />
+        <Compile Include="DamageInfo\VehDamageInfo.cs" />
         <Compile Include="DamageInfo\WeaponDamageInfo.cs" />
         <Compile Include="DamageInfo\WeaponHash.cs" />
         <Compile Include="DamageTrackerLookups.cs" />
