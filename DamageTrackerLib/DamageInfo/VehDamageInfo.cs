@@ -1,10 +1,13 @@
-﻿using Rage;
+﻿using System;
+using Rage;
 
 namespace DamageTrackerLib.DamageInfo;
 
 /// <summary>
 /// Holds all info for a Vehicle's damage.
 /// </summary>
+
+[Serializable]
 public struct VehDamageInfo
 {
     public uint VehHandle;
