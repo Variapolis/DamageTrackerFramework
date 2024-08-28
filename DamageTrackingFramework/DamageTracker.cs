@@ -34,11 +34,13 @@ namespace DamageTrackingFramework
             while (true)
             {
                 PedDamageList.Clear();
+                VehDamageList.Clear();
                 var peds = World.GetAllPeds();
                 foreach (var ped in peds) HandlePed(ped);
                 foreach (var veh in World.EnumerateVehicles()) HandleVehicle(veh);
                 SendData(mmfAccessor, stream);
                 CleanPedDictionaries();
+                CleanVehDictionaries();
                 GameFiber.Yield();
             }
             // ReSharper disable once FunctionNeverReturns
@@ -153,12 +155,22 @@ namespace DamageTrackingFramework
         private static PoolHandle GetAttackerPed(Entity ped)
         {
             PoolHandle attackerPed = default;
-            if (!ped.HasBeenDamagedByAnyPed) return attackerPed;
+            if (!ped.HasBeenDamagedByAnyPed && !ped.HasBeenDamagedByAnyVehicle) return attackerPed;
             foreach (var otherPed in PedHealthDict.Keys)
             {
                 if (!otherPed.IsValid() || !ped.HasBeenDamagedBy(otherPed)) continue;
                 attackerPed = otherPed.Handle;
                 break;
+            }
+            if (attackerPed == default)
+            {
+                foreach (var otherVehicle in VehHealthDict.Keys)
+                {
+                    if(!otherVehicle.IsValid() || !ped.HasBeenDamagedBy(otherVehicle)) continue;
+                    if(!otherVehicle.HasDriver || !otherVehicle.Driver) continue;
+                    attackerPed = otherVehicle.Driver.Handle;
+                    break;
+                }
             }
 
             return attackerPed;
@@ -266,6 +278,15 @@ namespace DamageTrackingFramework
             foreach (var ped in PedHealthDict.Keys.ToList())
                 if (!ped.Exists())
                     PedHealthDict.Remove(ped);
+        }
+
+        private static void CleanVehDictionaries()
+        {
+            foreach (var veh in VehHealthDict.Keys.ToList())
+            {
+                if (!veh.Exists())
+                    VehHealthDict.Remove(veh);
+            }
         }
     }
 }
