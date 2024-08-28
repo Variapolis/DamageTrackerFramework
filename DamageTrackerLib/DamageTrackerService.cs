@@ -121,7 +121,7 @@ namespace DamageTrackerLib
             if (!ped) return;
             if (enableLogging)
                 Game.LogTrivial(
-                    $"DamageTrackerService: Ped {ped.Model.Name} damaged by {pedDamageInfo.WeaponInfo.Hash}.");
+                    $"DamageTrackerService: Ped {ped.Model.Name} damaged by {pedDamageInfo.WeaponInfo.Hash} ({pedDamageInfo.AttackerPedHandle}).");
             var attackerPed = pedDamageInfo.AttackerPedHandle == default
                 ? null
                 : TryGetPedByHandle(pedDamageInfo.AttackerPedHandle);
@@ -142,7 +142,8 @@ namespace DamageTrackerLib
             if (!veh) return;
             if (enableLogging)
                 Game.LogTrivial(
-                    $"DamageTrackerService: Ped {veh.Model.Name} damaged by {vehDamageInfo.WeaponInfo.Hash}.");
+                    $"DamageTrackerService: Vehicle {veh.Model.Name} damaged by {vehDamageInfo.WeaponInfo.Hash} ({vehDamageInfo.AttackerPedHandle}).");
+            
             var attackerPed = vehDamageInfo.AttackerPedHandle == default
                 ? null
                 : TryGetPedByHandle(vehDamageInfo.AttackerPedHandle);
@@ -173,7 +174,7 @@ namespace DamageTrackerLib
         {
             if (!NativeFunction.Natives.DOES_ENTITY_EXIST<bool>((uint)handle))
             {
-                Game.LogTrivial($"DamageTrackerService Warning: Ped Handle {handle.ToString()} does not exist.");
+                Game.LogTrivial($"DamageTrackerService Warning: Vehicle Handle {handle.ToString()} does not exist.");
                 return null;
             }
             try
@@ -182,7 +183,7 @@ namespace DamageTrackerLib
             }
             catch (ArgumentException)
             {
-                Game.LogTrivial($"DamageTrackerService Exception Caught: Ped Handle ({handle.ToString()}) did not return an Entity.");
+                Game.LogTrivial($"DamageTrackerService Exception Caught: Vehicle Handle ({handle.ToString()}) did not return an Entity.");
             }
             return null;
         }
