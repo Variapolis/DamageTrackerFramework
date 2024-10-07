@@ -19,7 +19,7 @@ internal static class VersionChecker
     
     private class VersionResult
     {
-        public string ReceivedVersion = string.Empty;
+        public string ReceivedVersion = null;
         public bool FrameworkUpToDate = false, WebSuccess = false;
         public Exception Fault = null;
 
@@ -94,6 +94,14 @@ internal static class VersionChecker
         Game.DisplayNotification("commonmenu", "card_suit_hearts", $"DamageTrackerFramework {CurrentVersion}",
             "~g~Successfully Loaded",
             $"By Variapolis \nVersion is {(result.WebSuccess ? (result.FrameworkUpToDate ? "~g~Up To Date" : "~r~Out Of Date") : "~o~Version Check Failed")}");
+        
+        if (LibraryVersion != CurrentVersion)
+        {
+            Game.LogTrivial($"[VERSION MISMATCH] Online Version: {result.ReceivedVersion ?? "Unable To Retrieve"} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
+            Game.LogTrivial("DamageTrackerLib version does not match DamageTrackerFramework. Ensure both DLLs are up to date.");
+            Game.DisplayNotification("~r~WARNING: ~w~Version Mismatch for DamageTrackerLib.dll! ~o~Ensure both DLL files are up to date.\n" +
+                                     $"~w~Framework Version: ~o~{CurrentVersion}   ~w~Library Version: ~o~{LibraryVersion}");
+        }
     }
 
     private static void ProcessError(VersionResult result)
@@ -119,14 +127,6 @@ internal static class VersionChecker
         {
             Game.LogTrivial($"[VERSION OUTDATED] Online Version: {result.ReceivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
             Game.LogTrivial("Please update to the latest version here: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
-        }
-
-        if (LibraryVersion != CurrentVersion)
-        {
-            Game.LogTrivial($"[VERSION MISMATCH] Online Version: {result.ReceivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
-            Game.LogTrivial("DamageTrackerLib version does not match DamageTrackerFramework. Ensure both DLLs are up to date.");
-            Game.DisplayNotification("~r~WARNING: ~w~Version Mismatch for DamageTrackerLib.dll! ~o~Ensure both DLL files are up to date.\n" +
-                $"~w~Framework Version: ~o~{CurrentVersion}   ~w~Library Version: ~o~{LibraryVersion}");
         }
     }
 }
