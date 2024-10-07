@@ -16,87 +16,96 @@ internal static class VersionChecker
     private static readonly string LibraryVersion = Assembly.GetAssembly(typeof(DamageTrackerService)).GetName().Version.ToString(3);
 
     private static CancellationTokenSource _cancellationTokenSource;
-    private static Task _processTask;
-    private static string _receivedVersion;
-    private static bool _frameworkUpToDate, _webSuccess;
-    private static Exception _fault;
+    
+    private class VersionResult
+    {
+        public string ReceivedVersion = string.Empty;
+        public bool FrameworkUpToDate = false, WebSuccess = false;
+        public Exception Fault = null;
 
+        public VersionResult()
+        {
+        }
+    }
+    
     public static void CheckForUpdates()
     {
-        ResetState();
-        
-        _cancellationTokenSource = new CancellationTokenSource();
         AppDomain.CurrentDomain.DomainUnload += (_, _) => _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource = new CancellationTokenSource();
+        Task<VersionResult> processTask = Task.Run(CheckForUpdatesAsync, _cancellationTokenSource.Token);
         
-        GameFiber.StartNew(WaitProc);
-        
-        _processTask = Task.Run(CheckForUpdatesAsync, _cancellationTokenSource.Token);
+        GameFiber.StartNew(() =>
+        {
+            // Wait for the async task to complete
+            // ReSharper disable once AccessToDisposedClosure
+            GameFiber.WaitUntil(() => processTask.Status > TaskStatus.WaitingForChildrenToComplete);
+            if (processTask.IsCanceled) { return; }
+            if (processTask.Exception != null) { Game.LogTrivial(processTask.Exception.Message); }
+            HandleResult(processTask.Result);
+            
+            processTask.Dispose();
+            _cancellationTokenSource.Dispose();
+            _cancellationTokenSource = null;
+        });
     }
 
-    private static void ResetState()
-    {
-        _processTask = null;
-        _receivedVersion = default;
-        _frameworkUpToDate = _webSuccess = false;
-        _fault = null;
-    }
-
-    private static async Task CheckForUpdatesAsync()
+    private static async Task<VersionResult> CheckForUpdatesAsync()
     {
         using HttpClient httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        var result = new VersionResult();
 
         try
         {
             // Perform the asynchronous HTTP request
-            var response = await httpClient.GetStringAsync("https://www.lcpdfr.com/applications/downloadsng/interface/api.php?do=checkForUpdates&fileId=42767&textOnly=1");
+            var response = await httpClient.GetStringAsync(
+                "https://www.lcpdfr.com/applications/downloadsng/interface/api.php?do=checkForUpdates&fileId=42767&textOnly=1");
 
-            _receivedVersion = response.Trim();
-            _frameworkUpToDate = _receivedVersion == CurrentVersion;
-            _webSuccess = true;
+            result.ReceivedVersion = response.Trim();
+            result.FrameworkUpToDate = result.ReceivedVersion == CurrentVersion;
+            result.WebSuccess = true;
         }
         catch (HttpRequestException ex)
         {
-            _fault = ex;  // Handle network errors
+            result.Fault = ex; // Handle network errors
         }
         catch (TaskCanceledException ex)
         {
-            _fault = ex;  // Handle request timeouts
+            result.Fault = ex; // Handle request timeouts
         }
+        return result;
     }
 
-    private static void WaitProc()
+    private static void HandleResult(VersionResult result)
     {
-        // Wait for the async task to complete
-        GameFiber.Sleep(1000);
-        GameFiber.WaitUntil(() => _processTask.Status != TaskStatus.Running);
+        
 
         // Handle the result or fault
-        if (_fault != null)
+        if (result.Fault != null)
         {
-            ProcessError();
+            ProcessError(result);
         }
         else
         {
-            ProcessSuccess();
+            ProcessSuccess(result);
         }
 
         // Log the final state of the version check
         Game.LogTrivial($"DamageTrackerFramework loaded. Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
         Game.DisplayNotification("commonmenu", "card_suit_hearts", $"DamageTrackerFramework {CurrentVersion}",
             "~g~Successfully Loaded",
-            $"By Variapolis \nVersion is {(_webSuccess ? (_frameworkUpToDate ? "~g~Up To Date" : "~r~Out Of Date") : "~o~Version Check Failed")}");
+            $"By Variapolis \nVersion is {(result.WebSuccess ? (result.FrameworkUpToDate ? "~g~Up To Date" : "~r~Out Of Date") : "~o~Version Check Failed")}");
     }
 
-    private static void ProcessError()
+    private static void ProcessError(VersionResult result)
     {
-        if (_fault is HttpRequestException)
+        if (result.Fault is HttpRequestException)
         {
             Game.LogTrivial($"[VERSION CHECK FAILED] Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
             Game.LogTrivial("Version check failed, your internet may be disabled, or LCPDFR may be down.");
             Game.DisplayNotification("commonmenu", "mp_alerttriangle", "~y~DamageTrackerFramework Version Check",
                 "Version check ~r~Failed.", "Please ensure you are ~o~online~w~.");
         }
-        else if (_fault is TaskCanceledException)
+        else if (result.Fault is TaskCanceledException)
         {
             Game.LogTrivial($"[VERSION CHECK TIMED OUT] Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
             Game.DisplayNotification("commonmenu", "mp_alerttriangle", "~y~DamageTrackerFramework Version Check",
@@ -104,17 +113,17 @@ internal static class VersionChecker
         }
     }
 
-    private static void ProcessSuccess()
+    private static void ProcessSuccess(VersionResult result)
     {
-        if (!_frameworkUpToDate)
+        if (!result.FrameworkUpToDate)
         {
-            Game.LogTrivial($"[VERSION OUTDATED] Online Version: {_receivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
+            Game.LogTrivial($"[VERSION OUTDATED] Online Version: {result.ReceivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
             Game.LogTrivial("Please update to the latest version here: https://www.lcpdfr.com/downloads/gta5mods/scripts/42767-damage-tracker-framework/");
         }
 
         if (LibraryVersion != CurrentVersion)
         {
-            Game.LogTrivial($"[VERSION MISMATCH] Online Version: {_receivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
+            Game.LogTrivial($"[VERSION MISMATCH] Online Version: {result.ReceivedVersion} | Local DamageTrackerFramework Version: {CurrentVersion} | Local DamageTrackerLib Version: {LibraryVersion}");
             Game.LogTrivial("DamageTrackerLib version does not match DamageTrackerFramework. Ensure both DLLs are up to date.");
             Game.DisplayNotification("~r~WARNING: ~w~Version Mismatch for DamageTrackerLib.dll! ~o~Ensure both DLL files are up to date.\n" +
                 $"~w~Framework Version: ~o~{CurrentVersion}   ~w~Library Version: ~o~{LibraryVersion}");
