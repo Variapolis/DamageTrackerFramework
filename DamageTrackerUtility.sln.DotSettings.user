@@ -1,6 +1,7 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=D_003A_005CUsers_005CVari_005CDesktop_005CWork_005CForks_005CDamageTrackerPlugin_005CDamageTrackerUtility_005Creferences_005CDamageTrackerLib_002Edll/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=D_003A_005CUsers_005CVari_005CDesktop_005CWork_005CForks_005CTestCallouts_005CTestCallouts_005CReferences_005CDamageTrackingFramework_002Edll/@EntryIndexedValue">True</s:Boolean>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ATaskStatus_002Ecs_002Fl_003AC_0021_003FUsers_003FVari_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E2_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F0da8a94897c945419a9935a75f4e9b6a531020_003F89_003F837400d9_003FTaskStatus_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;&#xD;
   &lt;Assembly Path="D:\Users\Vari\Desktop\Work\Forks\DamageTrackerPlugin\DamageTrackerUtility\packages\RagePluginHook.1.98.0\lib\net472\RagePluginHook.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
