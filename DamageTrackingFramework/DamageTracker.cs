@@ -57,27 +57,6 @@ namespace DamageTrackingFramework
             accessor.WriteArray(0, buffer, 0, buffer.Length);
             accessor.Flush();
         }
-        
-        // private static void
-        //     SendPedData(MemoryMappedViewAccessor accessor,
-        //         MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
-        // {
-        //     stream.SetLength(0);
-        //     Formatter.Serialize(stream, PedDamageList.ToArray());
-        //     var buffer = stream.ToArray();
-        //     accessor.WriteArray(0, buffer, 0, buffer.Length);
-        //     accessor.Flush();
-        // }
-        //
-        // private static void
-        //     SendVehData(MemoryMappedViewAccessor accessor,
-        //         MemoryStream stream) // TODO: Resize file if ped count is too small or send less.
-        // {
-        //     foreach (var veh in VehDamageList)
-        //     {
-        //         Game.LogTrivial(veh.Model.Name);
-        //     }
-        // }
 
         private static void HandlePed(Ped ped)
         {
