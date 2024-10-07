@@ -131,13 +131,13 @@ namespace DamageTrackingFramework
             };
         }
 
-        private static PoolHandle GetAttackerPed(Entity ped)
+        private static PoolHandle GetAttackerPed(Entity entity)
         {
             PoolHandle attackerPed = default;
-            if (!ped.HasBeenDamagedByAnyPed && !ped.HasBeenDamagedByAnyVehicle) return attackerPed;
+            if (!entity.HasBeenDamagedByAnyPed && !entity.HasBeenDamagedByAnyVehicle) return attackerPed;
             foreach (var otherPed in PedHealthDict.Keys)
             {
-                if (!otherPed.IsValid() || !ped.HasBeenDamagedBy(otherPed)) continue;
+                if (!otherPed.IsValid() || !entity.HasBeenDamagedBy(otherPed)) continue;
                 attackerPed = otherPed.Handle;
                 break;
             }
@@ -145,7 +145,7 @@ namespace DamageTrackingFramework
             {
                 foreach (var otherVehicle in VehHealthDict.Keys)
                 {
-                    if(!otherVehicle.IsValid() || !ped.HasBeenDamagedBy(otherVehicle)) continue;
+                    if(!otherVehicle.IsValid() || !entity.HasBeenDamagedBy(otherVehicle)) continue;
                     if(!otherVehicle.HasDriver || !otherVehicle.Driver) continue;
                     attackerPed = otherVehicle.Driver.Handle;
                     break;
