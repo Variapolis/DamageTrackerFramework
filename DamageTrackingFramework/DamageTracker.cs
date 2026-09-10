@@ -36,8 +36,22 @@ namespace DamageTrackingFramework
                 PedDamageList.Clear();
                 VehDamageList.Clear();
                 var peds = World.GetAllPeds();
-                foreach (var ped in peds) HandlePed(ped);
-                foreach (var veh in World.EnumerateVehicles()) HandleVehicle(veh);
+                var vehs = World.GetAllVehicles();
+                foreach (var ped in peds)
+                {
+                    if (ped.ExistsSafe())
+                    {
+                        HandlePed(ped);
+                    }
+                }
+                foreach (var veh in vehs)
+                {
+                    if (veh.ExistsSafe())
+                    {
+                        HandleVehicle(veh);
+                    }
+                }
+
                 SendData(mmfAccessor, stream);
                 CleanPedDictionaries();
                 CleanVehDictionaries();
@@ -60,7 +74,7 @@ namespace DamageTrackingFramework
 
         private static void HandlePed(Ped ped)
         {
-            if (!ped.Exists() || !ped.IsHuman) return;
+            if (!ped.ExistsSafe() || !ped.IsHuman) return;
             if (!PedHealthDict.ContainsKey(ped)) PedHealthDict.Add(ped, (ped.Health, ped.Armor));
         
             var previousHealth = PedHealthDict[ped];
@@ -71,7 +85,7 @@ namespace DamageTrackingFramework
         
         private static void HandleVehicle(Vehicle veh)
         {
-            if (!veh) return;
+            if (veh.ExistsSafe()) return;
             if (!VehHealthDict.ContainsKey(veh)) VehHealthDict.Add(veh, veh.Health);
 
             var previousHealth = VehHealthDict[veh];
@@ -255,16 +269,34 @@ namespace DamageTrackingFramework
         private static void CleanPedDictionaries()
         {
             foreach (var ped in PedHealthDict.Keys.ToList())
-                if (!ped.Exists())
-                    PedHealthDict.Remove(ped);
+                    if (!ped.ExistsSafe())
+                        PedHealthDict.Remove(ped);
         }
 
         private static void CleanVehDictionaries()
         {
             foreach (var veh in VehHealthDict.Keys.ToList())
             {
-                if (!veh.Exists())
-                    VehHealthDict.Remove(veh);
+                    if (!veh.ExistsSafe())
+                        VehHealthDict.Remove(veh);
+            }
+        }
+
+        private static bool ExistsSafe(this Entity entity)
+        {
+            try
+            {
+                return entity.Exists();
+            }
+            catch (AccessViolationException ex)
+            {
+                Game.DisplayNotification("commonmenu", "card_suit_hearts", $"DamageTrackerFramework",
+                    "~r~Stopped a crash!",
+                    "Prevented RPH Entity.Exists() crash successfully!");
+                Game.LogTrivial("====== DTF Entity.Exists() crash prevented! ======");
+                Game.LogTrivial(ex.Message);
+                Game.LogTrivial("====== DTF Entity.Exists() crash prevented! ======");
+                return false;
             }
         }
     }
